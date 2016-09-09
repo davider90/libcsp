@@ -167,7 +167,7 @@ csp_conn_t * csp_conn_find(uint32_t id, uint32_t mask) {
 		if ((conn->state != CONN_CLOSED) && (conn->type == CONN_CLIENT) && (conn->idin.ext & mask) == (id & mask))
 			return conn;
 	}
-	
+
 	return NULL;
 
 }
@@ -354,7 +354,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 		return NULL;
 #endif
 	}
-	
+
 	/* Find an unused ephemeral port */
 	csp_conn_t * conn;
 
@@ -369,7 +369,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 
 		outgoing_id.sport = sport;
 		incoming_id.dport = sport;
-		
+
 		/* Match on destination port of _incoming_ identifier */
 		conn = csp_conn_find(incoming_id.ext, CSP_ID_DPORT_MASK);
 
@@ -448,7 +448,7 @@ void csp_conn_print_table(void) {
 
 	for (i = 0; i < CSP_CONN_MAX; i++) {
 		conn = &arr_conn[i];
-		printf("[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\n\r",
+		printf("[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\r\n",
 				i, conn, conn->state, conn->idin.src, conn->idin.dst,
 				conn->idin.dport, conn->idin.sport, conn->socket);
 #ifdef CSP_USE_RDP
