@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -320,7 +320,8 @@ static CSP_DEFINE_TASK(csp_task_router) {
 		csp_route_work(FIFO_TIMEOUT);
 	}
 
-        return CSP_TASK_RETURN;
+	return CSP_TASK_RETURN;
+
 }
 
 int csp_route_start_task(unsigned int task_stack_size, unsigned int priority) {
