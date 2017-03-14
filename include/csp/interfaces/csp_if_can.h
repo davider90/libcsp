@@ -38,9 +38,9 @@ extern csp_iface_t csp_if_can;
 
 /* CAN configuration struct */
 struct csp_can_config {
-	uint32_t bitrate;
-	uint32_t clock_speed;
-	char *ifc;
+       uint32_t bitrate;
+       uint32_t clock_speed;
+       const char *ifc;
 };
 
 /**
