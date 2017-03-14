@@ -63,6 +63,7 @@ extern void __attribute__((weak)) csp_assert_fail_action(char *assertion, const 
 #endif
 
 #ifdef __AVR__
+        #include <stdio.h>
 	#include <avr/pgmspace.h>
 	#define CONSTSTR(data) PSTR(data)
 	#undef printf
