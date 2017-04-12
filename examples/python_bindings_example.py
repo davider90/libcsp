@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# libcsp must be build with at least these options to run this example:
+# ./waf distclean configure build --enable-bindings --with-driver-usart=linux --enable-crc32 --enable-rdp --enable-if-zmq --enable-if-can --enable-can-socketcan=linux --enable-python3-bindings
+
 # Can be run from root of libcsp like this:
 # LD_LIBRARY_PATH=build PYTHONPATH=build python examples/python_bindings_example.py
 #
