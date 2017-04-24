@@ -275,29 +275,30 @@ def build(ctx):
 
     # Build shared library for Python bindings
     if ctx.env.ENABLE_BINDINGS:
-        ctx.shlib(source=ctx.path.ant_glob(ctx.env.FILES_CSP),
-            target = 'csp',
-            includes= ctx.env.INCLUDES_CSP,
-            export_includes = 'include',
-            use = ['include'],
-            lib = ctx.env.LIBS)
+        ctx.shlib(source = ctx.path.ant_glob(ctx.env.FILES_CSP),
+                  name = 'csp_shlib',
+                  target = 'csp',
+                  includes = ctx.env.INCLUDES_CSP,
+                  export_includes = 'include',
+                  use = ['include'],
+                  lib = ctx.env.LIBS)
 
         # python3 bindings
         if ctx.env.INCLUDES_PYTHON3:
-            ctx.shlib(source=['src/bindings/python/pycsp.c'],
+            ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py3',
-                      includes= ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON3,
+                      includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON3,
                       export_includes = 'include',
-                      use = ['csp', 'include'],
+                      use = ['csp_shlib', 'include'],
                       lib = ctx.env.LIBS)
 
         # python2 bindings
         if ctx.env.INCLUDES_PYTHON2:
-            ctx.shlib(source=['src/bindings/python/pycsp.c'],
+            ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py2',
-                      includes= ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON2,
+                      includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON2,
                       export_includes = 'include',
-                      use = ['csp', 'include'],
+                      use = ['csp_shlib', 'include'],
                       lib = ctx.env.LIBS)
 
     if ctx.env.ENABLE_EXAMPLES:
