@@ -19,14 +19,30 @@ else:
 if __name__ == "__main__":
 
     # init csp
-    csp_buffer_init(10, 300);
-    csp_init(27);
+    
+    print("csp_buffer_init: 10, 300")
+    csp_buffer_init(10, 300)
+    
+    print("csp_init: 27")
+    csp_init(27)
+    
+    print("csp_zmqhub_init: 27, localhost")
     csp_zmqhub_init(27, "localhost")
+
+    print("csp_can_init: CSP_CAN_MASKED");  
     csp_can_init(CSP_CAN_MASKED)
+    
+    print ("csp_rtable_set: 7, 5")
     csp_rtable_set(7, 5, csp_zmqhub_if(), CSP_NODE_MAC)
+    
+    print ("csp_rtable_set: 30, 5")
     csp_rtable_set(30, 5, csp_can_if(), CSP_NODE_MAC)
+    
+    print ("csp_route_start_task: 1000, 0")
     csp_route_start_task(1000, 0)
     time.sleep(1) # allow router startup
+    
+    print ("csp_rtable_print")
     csp_rtable_print()
 
     print("pinging addr 7, rc=" + str(csp_ping(30, 5000, 10)))
