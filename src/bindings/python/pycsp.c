@@ -1,11 +1,38 @@
 #include <Python.h>
+#include <csp/csp_endian.h>
 #include <csp/csp.h>
+#include <csp/csp_error.h>
+#include <csp/csp_rtable.h>
+#include <csp/csp_buffer.h>
+#include <csp/csp_cmp.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/interfaces/csp_if_can.h>
 
 #if PY_MAJOR_VERSION == 3
 #define IS_PY3
 #endif
+
+/**
+ * csp/csp_endian.h
+ */
+
+/* uint32_t csp_hton32(uint32_t h32); */
+static PyObject* pycsp_hton32(PyObject *self, PyObject *args) {
+	uint32_t h32;
+    if (!PyArg_ParseTuple(args, "I", &h32))
+        return NULL;
+
+    return Py_BuildValue("I", csp_hton32(h32));
+}
+
+/* uint32_t csp_ntoh32(uint32_t n32); */
+static PyObject* pycsp_ntoh32(PyObject *self, PyObject *args) {
+	uint32_t n32;
+    if (!PyArg_ParseTuple(args, "I", &n32))
+        return NULL;
+
+    return Py_BuildValue("I", csp_ntoh32(n32));
+}
 
 /**
  * csp/csp.h
@@ -710,6 +737,7 @@ static PyObject* pycsp_rtable_print(PyObject *self, PyObject *args) {
 }
 
 /* void csp_route_table_load(uint8_t route_table_in[CSP_ROUTE_TABLE_SIZE]); */
+/*
 static PyObject* pycsp_route_table_load(PyObject *self, PyObject *args) {
 	PyObject* route_table_in_capsule;
     if (!PyArg_ParseTuple(args, "O", &route_table_in_capsule))
@@ -718,8 +746,10 @@ static PyObject* pycsp_route_table_load(PyObject *self, PyObject *args) {
     csp_route_table_load(PyCapsule_GetPointer(route_table_in_capsule, "uint8_t"));
     Py_RETURN_NONE;
 }
+*/
 
 /* void csp_route_table_save(uint8_t route_table_out[CSP_ROUTE_TABLE_SIZE]); */
+/*
 static PyObject* pycsp_route_table_save(PyObject *self, PyObject *args) {
 	PyObject* route_table_out_capsule;
     if (!PyArg_ParseTuple(args, "O", &route_table_out_capsule))
@@ -728,6 +758,7 @@ static PyObject* pycsp_route_table_save(PyObject *self, PyObject *args) {
     csp_route_table_save(PyCapsule_GetPointer(route_table_out_capsule, "uint8_t"));
     Py_RETURN_NONE;
 }
+*/
 
 /* int csp_rtable_save(char * buffer, int maxlen); */
 /*
@@ -851,10 +882,29 @@ static PyObject* pycsp_buffer_size(PyObject *self, PyObject *args) {
 }
 
 /**
+ * csp/csp_cmp.h
+ */
+
+/* static inline int csp_cmp_clock(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg); */
+static PyObject* pycsp_cmp_clock(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint32_t sec;
+    uint32_t nsec;
+    if (!PyArg_ParseTuple(args, "bIII", &node, &timeout, &sec, &nsec))
+        return NULL;
+
+    struct csp_cmp_message msg;
+    msg.clock.tv_sec = sec;
+    msg.clock.tv_nsec = nsec;
+    return Py_BuildValue("i", csp_cmp_clock(node, timeout, &msg));
+}
+
+/**
  * csp/interfaces/csp_if_zmqhub.h
  */
 
-/*int csp_zmqhub_init(char addr, char * host); */
+/* int csp_zmqhub_init(char addr, char * host); */
 static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
     char addr;
     char* host;
@@ -918,7 +968,11 @@ static PyObject* pycsp_can_if(PyObject *self, PyObject *args) {
     return PyCapsule_New(&csp_if_can, "csp_iface_t", NULL);
 }
 
-static PyMethodDef pycsp_methods[] = {
+static PyMethodDef methods[] = {
+
+	/* csp/csp.h */
+	{"csp_hton32", pycsp_hton32, METH_VARARGS, ""},
+	{"csp_ntoh32", pycsp_ntoh32, METH_VARARGS, ""},
 
     /* csp/csp.h */
     {"csp_init", pycsp_init, METH_VARARGS, ""},
@@ -983,8 +1037,8 @@ static PyMethodDef pycsp_methods[] = {
 	{"csp_rtable_find_mac", pycsp_rtable_find_mac, METH_VARARGS, ""},
 	{"csp_rtable_set", pycsp_rtable_set, METH_VARARGS, ""},
 	{"csp_rtable_print", pycsp_rtable_print, METH_NOARGS, ""},
-	{"csp_route_table_load", pycsp_route_table_load, METH_VARARGS, ""},
-	{"csp_route_table_save", pycsp_route_table_save, METH_VARARGS, ""},
+	/* {"csp_route_table_load", pycsp_route_table_load, METH_VARARGS, ""}, */
+	/* {"csp_route_table_save", pycsp_route_table_save, METH_VARARGS, ""}, */
 	/* {"csp_rtable_save", pycsp_rtable_save, METH_VARARGS, ""}, */
 	/* {"csp_rtable_load", pycsp_rtable_load, METH_VARARGS, ""}, */
 	/* {"csp_rtable_check", pycsp_rtable_check, METH_VARARGS, ""}, */
@@ -999,6 +1053,9 @@ static PyMethodDef pycsp_methods[] = {
 	{"csp_buffer_clone", pycsp_buffer_clone, METH_VARARGS, ""},
 	{"csp_buffer_remaining", pycsp_buffer_remaining, METH_NOARGS, ""},
 	{"csp_buffer_size", pycsp_buffer_size, METH_NOARGS, ""},
+
+	/* csp/csp_buffer.h */
+	{"csp_cmp_clock", pycsp_cmp_clock, METH_VARARGS, ""},
 
     /* csp/interfaces/csp_if_zmqhub.h */
 	{"csp_zmqhub_init", pycsp_zmqhub_init, METH_VARARGS, ""},
@@ -1024,7 +1081,7 @@ static struct PyModuleDef moduledef = {
     NULL, /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
-    pycsp_methods
+	methods
 };
 #endif
 
@@ -1039,7 +1096,7 @@ PyMODINIT_FUNC initlibcsp_py2(void) {
 #ifdef IS_PY3
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("libcsp_py2", pycsp_methods);
+    m = Py_InitModule("libcsp_py2", methods);
 #endif
     /**
      * csp/csp_types.h
@@ -1068,6 +1125,12 @@ PyMODINIT_FUNC initlibcsp_py2(void) {
     PyModule_AddIntConstant(m, "CSP_FXTEA", CSP_FXTEA);
     PyModule_AddIntConstant(m, "CSP_FRDP", CSP_FRDP);
     PyModule_AddIntConstant(m, "CSP_FCRC32", CSP_FCRC32);
+
+    /**
+	 * csp/csp_error.h
+	 */
+
+    PyModule_AddIntConstant(m, "CSP_ERR_NONE", CSP_ERR_NONE);
 
     /* SOCKET OPTIONS */
 
