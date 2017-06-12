@@ -670,6 +670,30 @@ static PyObject* pycsp_buffer_print_table(PyObject *self, PyObject *args) {
 }
 */
 
+
+static PyObject* pycsp_cmp_ident(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    if (!PyArg_ParseTuple(args, "bi", &node, &timeout)) {
+        return NULL;
+    }
+
+    struct csp_cmp_message msg;
+    int rc = csp_cmp_ident(node, timeout, &msg);
+    if (rc != CSP_ERR_NONE) {
+        return NULL;
+    }
+
+    return Py_BuildValue("sssss",
+                         msg.ident.hostname,
+                         msg.ident.model,
+                         msg.ident.revision,
+                         msg.ident.date,
+                         msg.ident.time);
+}
+
+
+
 /* void csp_set_memcpy(csp_memcpy_fnc_t fnc); */
 static PyObject* pycsp_cmp_set_memcpy(PyObject *self, PyObject *args) {
 	PyObject* fnc_capsule;
@@ -1056,6 +1080,7 @@ static PyMethodDef methods[] = {
 
 	/* csp/csp_buffer.h */
 	{"csp_cmp_clock", pycsp_cmp_clock, METH_VARARGS, ""},
+        {"csp_cmp_ident", pycsp_cmp_ident, METH_VARARGS, ""},
 
     /* csp/interfaces/csp_if_zmqhub.h */
 	{"csp_zmqhub_init", pycsp_zmqhub_init, METH_VARARGS, ""},
