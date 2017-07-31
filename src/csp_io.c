@@ -100,10 +100,8 @@ csp_socket_t * csp_socket(uint32_t opts) {
 	 * if not, the user must init the queue using csp_listen */
 	if (opts & CSP_SO_CONN_LESS) {
 		sock->socket = csp_queue_create(CSP_CONN_QUEUE_LENGTH, sizeof(csp_packet_t *));
-		if (sock->socket == NULL) {
-			csp_close(sock);
+		if (sock->socket == NULL)
 			return NULL;
-                }
 	} else {
 		sock->socket = NULL;
 	}
@@ -151,9 +149,8 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 
 #ifdef CSP_USE_RDP
 	/* Packet read could trigger ACK transmission */
-	if (conn->idin.flags & CSP_FRDP && conn->rdp.delayed_acks)
-	    csp_rdp_check_ack(conn);
-
+	if (conn->idin.flags & CSP_FRDP)
+		csp_rdp_check_ack(conn);
 #endif
 
 	return packet;
@@ -337,12 +334,8 @@ int csp_transaction_persistent(csp_conn_t * conn, uint32_t timeout, void * outbu
 }
 
 int csp_transaction(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen) {
-    return csp_transaction2(prio, dest, port, timeout, outbuf, outlen, inbuf, inlen, 0);
-}
 
-int csp_transaction2(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen, uint32_t opts) {
-
-	csp_conn_t * conn = csp_connect(prio, dest, port, 0, opts);
+	csp_conn_t * conn = csp_connect(prio, dest, port, 0, csp_conf.conn_dfl_so);
 	if (conn == NULL)
 		return 0;
 
