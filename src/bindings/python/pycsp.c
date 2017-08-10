@@ -172,22 +172,22 @@ static PyObject* pycsp_transaction(PyObject *self, PyObject *args) {
     uint8_t dest;
     uint8_t port;
     uint32_t timeout;
-    PyObject* outbuf_capsule;
-    int outlen;
-    PyObject* inbuf_capsule;
-    int inlen;
-    if (!PyArg_ParseTuple(args, "bbbIOiOi", &prio, &dest, &port, &timeout, &outbuf_capsule, &outlen, &inbuf_capsule, &inlen)) {
+    Py_buffer inbuf;
+    Py_buffer outbuf;
+    if (!PyArg_ParseTuple(args, "bbbIw*w*", &prio, &dest, &port, &timeout, &outbuf, &inbuf)) {
         Py_RETURN_NONE;
     }
 
-    return Py_BuildValue("i", csp_transaction(prio,
-                                              dest,
-                                              port,
-                                              timeout,
-                                              PyCapsule_GetPointer(outbuf_capsule, "void"),
-                                              outlen,
-                                              PyCapsule_GetPointer(inbuf_capsule, "void"),
-                                              inlen));
+    int result = csp_transaction(prio,
+                                 dest,
+                                 port,
+                                 timeout,
+                                 outbuf.buf,
+                                 outbuf.len,
+                                 inbuf.buf,
+                                 inbuf.len);
+
+    return Py_BuildValue("i", result);
 }
 
 /* csp_packet_t *csp_recvfrom(csp_socket_t *socket, uint32_t timeout); */
@@ -718,7 +718,7 @@ static PyMethodDef methods[] = {
     {"csp_listen", pycsp_listen, METH_VARARGS, ""},
     {"csp_bind", pycsp_bind, METH_VARARGS, ""},
     {"csp_route_start_task", pycsp_route_start_task, METH_VARARGS, ""},
-    {"csp_route_work", pycsp_route_start_task, METH_VARARGS, ""},
+    {"csp_route_work", pycsp_route_work, METH_VARARGS, ""},
     {"csp_ping", pycsp_ping, METH_VARARGS, ""},
     {"csp_ping_noreply", pycsp_ping_noreply, METH_VARARGS, ""},
     {"csp_reboot", pycsp_reboot, METH_VARARGS, ""},
