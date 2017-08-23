@@ -284,7 +284,7 @@ int csp_close(csp_conn_t * conn) {
 	/* Ensure connection queue is empty */
 	csp_conn_flush_rx_queue(conn);
 
-        if (conn->socket && (conn->type == CONN_SERVER) && (conn->opts & (CSP_SO_CONN_LESS | CSP_SO_INTERNAL_LISTEN))) {
+        if (conn->socket) {
 		csp_queue_remove(conn->socket);
 		conn->socket = NULL;
         }
@@ -494,6 +494,6 @@ int csp_conn_print_table_str(char * str_buf, int str_size) {
 
 const csp_conn_t * csp_conn_get_array(size_t * size)
 {
-	*size = CSP_CONN_MAX;    
+	*size = CSP_CONN_MAX;
 	return arr_conn;
 }
