@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CSP_TYPES_H_
 #define CSP_TYPES_H_
 
+#include <stdint.h>
+
 #include <csp/csp_autoconfig.h>
 
 /* Make bool for compilers without stdbool.h */
