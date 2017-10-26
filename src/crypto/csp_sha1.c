@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "csp_sha1.h"
 
-#ifdef CSP_USE_HMAC
+#if defined(CSP_USE_HMAC) || defined(CSP_USE_XTEA)
 
 /* Rotate left macro */
 #define ROL(x,y)	(((x) << (y)) | ((x) >> (32-y)))
