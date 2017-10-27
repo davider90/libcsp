@@ -430,6 +430,19 @@ static PyObject* pycsp_rdp_get_opt(PyObject *self, PyObject *args) {
                          ack_delay_count);
 }
 
+
+/*
+ *
+ * int csp_xtea_set_key(char *key, uint32_t keylen);
+ */
+static PyObject* pycsp_xtea_set_key(PyObject *self, PyObject *args) {
+    char* key;
+    uint32_t keylen;
+    if (!PyArg_ParseTuple(args, "si", &key, &keylen)) {
+        return NULL; // TypeError is thrown
+    }
+    return Py_BuildValue("i", csp_xtea_set_key(key, keylen));
+}
 /**
  * csp/csp_rtable.h
  */
@@ -658,6 +671,7 @@ static PyMethodDef methods[] = {
     {"shutdown", pycsp_shutdown, METH_VARARGS, ""},
     {"rdp_set_opt", pycsp_rdp_set_opt, METH_VARARGS, ""},
     {"rdp_get_opt", pycsp_rdp_get_opt, METH_NOARGS, ""},
+    {"xtea_set_key", pycsp_xtea_set_key, METH_VARARGS, ""},
 
     /* csp/csp_rtable.h */
     {"rtable_set", pycsp_rtable_set, METH_VARARGS, ""},
