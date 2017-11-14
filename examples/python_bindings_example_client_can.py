@@ -16,27 +16,13 @@ if __name__ == "__main__":
 
     csp.buffer_init(10, 300)
     csp.init(28)
-    csp.zmqhub_init(28, "localhost")
-    csp.rtable_set(27, 5, "ZMQHUB")
+    csp.can_socketcan_init("can0")
+    csp.rtable_set(4, 5, "CAN")
     csp.route_start_task()
 
     ## allow router task startup
     time.sleep(1)
 
-    ## cmp_ident
-    (rc, host, model, rev, date, time) = csp.cmp_ident(27)
-    if rc == csp.CSP_ERR_NONE:
-        print (host, model, rev, date, time)
-    else:
-        print ("error in cmp_ident, rc=%i" % (rc))
 
-    ## transaction
-    outbuf = bytearray().fromhex('01')
-    inbuf = bytearray(1)
-    print ("using csp_transaction to send a single byte")
-    if csp.transaction(0, 27, 10, 1000, outbuf, inbuf) < 1:
-        print ("csp_transaction failed")
-    else:
-        print ("got reply, data=" + ''.join('{:02x}'.format(x) for x in inbuf))
-
+    print csp.ping(4)
 
