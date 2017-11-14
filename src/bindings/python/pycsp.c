@@ -8,6 +8,7 @@
 #include <csp/interfaces/csp_if_zmqhub.h>
 #include <csp/interfaces/csp_if_kiss.h>
 #include <csp/drivers/usart.h>
+#include <csp/drivers/can_socketcan.h>
 
 #if PY_MAJOR_VERSION == 3
 #define IS_PY3
@@ -602,6 +603,29 @@ static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
 }
 
 /**
+ * csp/drivers/can_socketcan.h
+ */
+
+/*
+ * csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc);
+ */
+static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args)
+{
+    char* ifc;
+    int bitrate = 1000000;
+    int promisc = 0;
+
+    if (!PyArg_ParseTuple(args, "s|ii", &ifc, &bitrate, &promisc))
+    {
+        return NULL;
+    }
+
+    csp_can_socketcan_init(ifc, bitrate, promisc);
+    Py_RETURN_NONE;
+}
+
+
+/**
  * csp/interfaces/csp_if_kiss.h
  */
 
@@ -723,6 +747,9 @@ static PyMethodDef methods[] = {
     /* csp/interfaces/csp_if_zmqhub.h */
     {"zmqhub_init", pycsp_zmqhub_init, METH_VARARGS, ""},
     {"kiss_init", pycsp_kiss_init, METH_VARARGS, ""},
+
+    /* csp/drivers/can_socketcan.h */
+    {"can_socketcan_init", pycsp_can_socketcan_init, METH_VARARGS, ""},
 
     /* helpers */
     {"packet_get_length", pycsp_packet_get_length, METH_O, ""},
