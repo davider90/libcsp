@@ -24,5 +24,7 @@ if __name__ == "__main__":
     time.sleep(1)
 
 
-    print csp.ping(4)
+    node = 4
+    if csp.ping(node) < 0:
+        print ("Unable to ping node %d"%(node))
 
