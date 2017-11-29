@@ -22,7 +22,7 @@
 import os
 
 APPNAME = 'libcsp'
-VERSION = '1.5'
+VERSION = '1.4'
 
 top = '.'
 out = 'build'
@@ -90,7 +90,7 @@ def configure(ctx):
         ctx.fatal('--with-loglevel must be either \'error\', \'warn\', \'info\' or \'debug\'')
 
     # Setup and validate toolchain
-    if (len(ctx.stack_path) <= 1) and ctx.options.toolchain:
+    if ctx.options.toolchain:
         ctx.env.CC = ctx.options.toolchain + 'gcc'
         ctx.env.AR = ctx.options.toolchain + 'ar'
 
@@ -108,8 +108,8 @@ def configure(ctx):
         ctx.env.FEATURES += ['cstlib']
 
     # Setup CFLAGS
-    if (len(ctx.stack_path) <= 1) and (len(ctx.env.CFLAGS) == 0):
-        ctx.env.prepend_value('CFLAGS', ["-std=gnu99", "-g", "-Os", "-Wall", "-Wextra", "-Wshadow", "-Wcast-align", "-Wwrite-strings", "-Wno-unused-parameter"])
+    if (len(ctx.env.CFLAGS) == 0):
+        ctx.env.prepend_value('CFLAGS', ['-Os','-Wall', '-g', '-std=gnu99'])
 
     # Setup extra includes
     ctx.env.append_unique('INCLUDES_CSP', ['include'] + ctx.options.includes.split(','))
@@ -166,9 +166,9 @@ def configure(ctx):
 
     # Check for python development
     if ctx.options.enable_bindings:
-        ctx.env.LIBCSP_PYTHON2 = ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7', mandatory=False)
+        ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7')
         if ctx.options.enable_python3_bindings:
-            ctx.env.LIBCSP_PYTHON3 = ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5', mandatory=False)
+            ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5')
 
     # Create config file
     if not ctx.options.disable_output:
@@ -256,10 +256,10 @@ def build(ctx):
             ctx.install_files('${PREFIX}/include/csp/interfaces', 'include/csp/interfaces/csp_if_i2c.h')
         if 'src/interfaces/csp_if_kiss.c' in ctx.env.FILES_CSP:
             ctx.install_files('${PREFIX}/include/csp/interfaces', 'include/csp/interfaces/csp_if_kiss.h')
+        if 'src/interfaces/csp_if_zmqhub.c' in ctx.env.FILES_CSP:
+            ctx.install_files('${PREFIX}/include/csp/interfaces', 'include/csp/interfaces/csp_if_zmqhub.h')
         if 'src/drivers/usart/usart_{0}.c'.format(ctx.options.with_driver_usart) in ctx.env.FILES_CSP:
-            ctx.install_as('${PREFIX}/include/csp/drivers/usart.h', 'include/csp/drivers/usart.h')            
-        if 'src/drivers/can/can_socketcan.c' in ctx.env.FILES_CSP:
-            ctx.install_as('${PREFIX}/include/csp/drivers/can_socketcan.h', 'include/csp/drivers/can_socketcan.h')
+            ctx.install_as('${PREFIX}/include/csp/drivers/usart.h', 'include/csp/drivers/usart.h')
 
         ctx.install_files('${PREFIX}/include/csp', 'include/csp/csp_autoconfig.h', cwd=ctx.bldnode)
 
@@ -276,16 +276,16 @@ def build(ctx):
 
     # Build shared library for Python bindings
     if ctx.env.ENABLE_BINDINGS:
-        ctx.shlib(source = ctx.path.ant_glob(ctx.env.FILES_CSP, excl=ctx.env.EXCL_CSP),
-                  name = 'csp_shlib',
-                  target = 'csp',
-                  includes = ctx.env.INCLUDES_CSP,
-                  export_includes = 'include',
-                  use = ['include'],
-                  lib = ctx.env.LIBS)
+        ctx.shlib(source=ctx.path.ant_glob(ctx.env.FILES_CSP),
+            name = 'csp_shlib',
+            target = 'csp',
+            includes= ctx.env.INCLUDES_CSP,
+            export_includes = 'include',
+            use = ['include'],
+            lib = ctx.env.LIBS)
 
         # python3 bindings
-        if ctx.env.LIBCSP_PYTHON3:
+        if ctx.env.INCLUDES_PYTHON3:
             ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py3',
                       includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON3,
@@ -294,7 +294,7 @@ def build(ctx):
                       lib = ctx.env.LIBS)
 
         # python2 bindings
-        if ctx.env.LIBCSP_PYTHON2:
+        if ctx.env.INCLUDES_PYTHON2:
             ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py2',
                       includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON2,
@@ -315,14 +315,14 @@ def build(ctx):
                 includes = ctx.env.INCLUDES_CSP,
                 lib = ctx.env.LIBS,
                 use = 'csp')
-            
+
         if ctx.options.enable_if_zmqhub:
             ctx.program(source = 'examples/zmqproxy.c',
                         target = 'zmqproxy',
                         includes = ctx.env.INCLUDES_CSP,
                         lib = ctx.env.LIBS,
                         use = 'csp')
-
+            
         if 'posix' in ctx.env.OS:
             ctx.program(source = 'examples/csp_if_fifo.c',
                 target = 'fifo',

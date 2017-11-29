@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
 # libcsp must be build with at least these options to run this example server:
-# ./waf distclean configure build --enable-bindings --enable-crc32 --enable-rdp --enable-if-zmq --with-driver-usart=linux --enable-if-kiss --enable-xtea --enable-if-can --enable-can-socketcan
-
+# ./waf distclean configure build --enable-bindings --enable-crc32 --enable-rdp --enable-if-zmq
+#                                 --with-driver-usart=linux --enable-if-kiss --enable-xtea --enable-if-can
+#                                 --enable-can-socketcan --enable-hmac --enable-examples
 # Can be run from root of libcsp like this:
 # LD_LIBRARY_PATH=build PYTHONPATH=bindings/python:build python examples/python_bindings_example_server.py
 #
@@ -19,16 +20,10 @@ if __name__ == "__main__":
     zmqp = subprocess.Popen('build/zmqproxy')
 
     # init csp
-    csp.buffer_init(10, 300)
-    csp.init(27)
+    csp.init(27,"test_service","bindings","1.2.3",10,300)
     csp.zmqhub_init(27, "localhost")
     csp.rtable_set(28, 5, "ZMQHUB")
     csp.route_start_task()
-
-    # set identity
-    csp.set_hostname("test_service")
-    csp.set_model("bindings")
-    csp.set_revision("1.2.3")
 
     # and read it back
     print (csp.get_hostname())
@@ -45,9 +40,9 @@ if __name__ == "__main__":
             continue
 
         print ("connection: source=%i:%i, dest=%i:%i" % (csp.conn_src(conn),
-                                                        csp.conn_sport(conn),
-                                                        csp.conn_dst(conn),
-                                                        csp.conn_dport(conn)))
+                                                         csp.conn_sport(conn),
+                                                         csp.conn_dst(conn),
+                                                         csp.conn_dport(conn)))
 
         while True:
             packet = csp.read(conn)
@@ -69,4 +64,3 @@ if __name__ == "__main__":
             else:
                 csp.service_handler(conn, packet)
         csp.close(conn)
-
