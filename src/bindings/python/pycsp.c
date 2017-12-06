@@ -529,6 +529,59 @@ static PyObject* pycsp_cmp_ident(PyObject *self, PyObject *args) {
                          msg.ident.time);
 }
 
+static PyObject* pycsp_cmp_peek(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint8_t len;
+    uint32_t addr;
+    Py_buffer outbuf;
+
+    if (!PyArg_ParseTuple(args, "biibw*", &node, &timeout, &addr, &len, &outbuf)) {
+        Py_RETURN_NONE;
+    }
+
+    if (len > CSP_CMP_PEEK_MAX_LEN) {
+        len = CSP_CMP_PEEK_MAX_LEN;
+    }
+    struct csp_cmp_message msg;
+    msg.peek.addr = csp_hton32(addr);
+    msg.peek.len = len;
+    int rc = csp_cmp_peek(node, timeout, &msg);
+    if (rc != CSP_ERR_NONE) {
+        Py_RETURN_NONE;
+    }
+    memcpy(outbuf.buf, msg.peek.data, len);
+    outbuf.len = len;
+
+    return Py_BuildValue("i", rc);
+}
+
+static PyObject* pycsp_cmp_poke(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint8_t len;
+    uint32_t addr;
+    Py_buffer inbuf;
+
+    if (!PyArg_ParseTuple(args, "biibw*", &node, &timeout, &addr, &len, &inbuf)) {
+        Py_RETURN_NONE;
+    }
+
+    if (len > CSP_CMP_POKE_MAX_LEN) {
+        len = CSP_CMP_POKE_MAX_LEN;
+    }
+    struct csp_cmp_message msg;
+    msg.poke.addr = csp_hton32(addr);
+    msg.poke.len = len;
+    memcpy(msg.poke.data, inbuf.buf, len);
+    int rc = csp_cmp_poke(node, timeout, &msg);
+    if (rc != CSP_ERR_NONE) {
+        Py_RETURN_NONE;
+    }
+
+    return Py_BuildValue("i", rc);
+}
+
 /**
  * csp/csp_rtable.h
  */
@@ -625,8 +678,8 @@ static PyObject* pycsp_cmp_clock(PyObject *self, PyObject *args) {
     }
 
     struct csp_cmp_message msg;
-    msg.clock.tv_sec = sec;
-    msg.clock.tv_nsec = nsec;
+    msg.clock.tv_sec = csp_hton32(sec);
+    msg.clock.tv_nsec = csp_hton32(nsec);
     return Py_BuildValue("i", csp_cmp_clock(node, timeout, &msg));
 }
 
@@ -741,6 +794,8 @@ static PyMethodDef methods[] = {
     /* csp/csp_buffer.h */
     {"csp_cmp_clock", pycsp_cmp_clock, METH_VARARGS, ""},
     {"csp_cmp_ident", pycsp_cmp_ident, METH_VARARGS, ""},
+    {"csp_cmp_peek", pycsp_cmp_peek, METH_VARARGS, ""},
+    {"csp_cmp_poke", pycsp_cmp_poke, METH_VARARGS, ""},
 
     /* csp/interfaces/csp_if_zmqhub.h */
     {"csp_zmqhub_init", pycsp_zmqhub_init, METH_VARARGS, ""},
