@@ -165,9 +165,9 @@ def configure(ctx):
 
     # Check for python development
     if ctx.options.enable_bindings:
-        ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7')
+        ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7', mandatory=False)
         if ctx.options.enable_python3_bindings:
-            ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5')
+            ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5', mandatory=False)
 
     # Create config file
     if not ctx.options.disable_output:
