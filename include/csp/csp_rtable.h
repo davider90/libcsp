@@ -102,14 +102,14 @@ int csp_rtable_save(char * buffer, int maxlen);
  * The string must NOT be const.
  * @param buffer Pointer to string
  */
-void csp_rtable_load(char * buffer);
+void csp_rtable_load(const char * buffer);
 
 /**
  * Check string for valid routing table
  * @param buffer Pointer to string
  * @return number of valid entries found
  */
-int csp_rtable_check(char * buffer);
+int csp_rtable_check(const char * buffer);
 
 /**
  * Clear routing table:
