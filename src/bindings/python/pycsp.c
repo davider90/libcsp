@@ -9,6 +9,7 @@
 #include <csp/interfaces/csp_if_kiss.h>
 #include <csp/drivers/usart.h>
 #include <csp/drivers/can_socketcan.h>
+#include <csp/csp_endian.h>
 
 #if PY_MAJOR_VERSION == 3
 #define IS_PY3
@@ -584,6 +585,76 @@ static PyObject* pycsp_cmp_route_set(PyObject *self, PyObject *args) {
                          rc);
 }
 
+/* static inline int pycsp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg); */
+static PyObject* pycsp_cmp_peek(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint8_t len;
+    uint32_t addr;
+    Py_buffer outbuf;
+
+    if (!PyArg_ParseTuple(args, "biibw*", &node, &timeout, &addr, &len, &outbuf)) {
+        Py_RETURN_NONE;
+    }
+
+    if (len > CSP_CMP_PEEK_MAX_LEN) {
+        len = CSP_CMP_PEEK_MAX_LEN;
+    }
+    struct csp_cmp_message msg;
+    msg.peek.addr = csp_hton32(addr);
+    msg.peek.len = len;
+    int rc = csp_cmp_peek(node, timeout, &msg);
+    if (rc != CSP_ERR_NONE) {
+        Py_RETURN_NONE;
+    }
+    memcpy(outbuf.buf, msg.peek.data, len);
+    outbuf.len = len;
+
+    return Py_BuildValue("i", rc);
+}
+
+/* static inline int pycsp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg); */
+static PyObject* pycsp_cmp_poke(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint8_t len;
+    uint32_t addr;
+    Py_buffer inbuf;
+
+    if (!PyArg_ParseTuple(args, "biibw*", &node, &timeout, &addr, &len, &inbuf)) {
+        Py_RETURN_NONE;
+    }
+
+    if (len > CSP_CMP_POKE_MAX_LEN) {
+        len = CSP_CMP_POKE_MAX_LEN;
+    }
+    struct csp_cmp_message msg;
+    msg.poke.addr = csp_hton32(addr);
+    msg.poke.len = len;
+    memcpy(msg.poke.data, inbuf.buf, len);
+    int rc = csp_cmp_poke(node, timeout, &msg);
+    if (rc != CSP_ERR_NONE) {
+        Py_RETURN_NONE;
+    }
+
+    return Py_BuildValue("i", rc);
+}
+
+/* static inline int csp_cmp_clock(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg); */
+static PyObject* pycsp_cmp_clock(PyObject *self, PyObject *args) {
+    uint8_t node;
+    uint32_t timeout;
+    uint32_t sec;
+    uint32_t nsec;
+    if (!PyArg_ParseTuple(args, "bIII", &node, &timeout, &sec, &nsec)) {
+        Py_RETURN_NONE;
+    }
+
+    struct csp_cmp_message msg;
+    msg.clock.tv_sec = csp_hton32(sec);
+    msg.clock.tv_nsec = csp_hton32(nsec);
+    return Py_BuildValue("i", csp_cmp_clock(node, timeout, &msg));
+}
 
 /**
  * csp/interfaces/csp_if_zmqhub.h
@@ -743,6 +814,10 @@ static PyMethodDef methods[] = {
     /* csp/csp_cmp.h */
     {"cmp_ident", pycsp_cmp_ident, METH_VARARGS, ""},
     {"cmp_route_set", pycsp_cmp_route_set, METH_VARARGS, ""},
+    {"cmp_peek", pycsp_cmp_peek, METH_VARARGS, ""},
+    {"cmp_poke", pycsp_cmp_poke, METH_VARARGS, ""},
+    {"cmp_clock", pycsp_cmp_clock, METH_VARARGS, ""},
+
 
     /* csp/interfaces/csp_if_zmqhub.h */
     {"zmqhub_init", pycsp_zmqhub_init, METH_VARARGS, ""},
