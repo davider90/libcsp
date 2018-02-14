@@ -166,9 +166,9 @@ def configure(ctx):
 
     # Check for python development
     if ctx.options.enable_bindings:
-        ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7')
+        ctx.env.LIBCSP_PYTHON2 = ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7', mandatory=False)
         if ctx.options.enable_python3_bindings:
-            ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5')
+            ctx.env.LIBCSP_PYTHON3 = ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5', mandatory=False)
 
     # Create config file
     if not ctx.options.disable_output:
@@ -283,7 +283,7 @@ def build(ctx):
                   lib = ctx.env.LIBS)
 
         # python3 bindings
-        if ctx.env.INCLUDES_PYTHON3:
+        if ctx.env.LIBCSP_PYTHON3:
             ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py3',
                       includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON3,
@@ -292,7 +292,7 @@ def build(ctx):
                       lib = ctx.env.LIBS)
 
         # python2 bindings
-        if ctx.env.INCLUDES_PYTHON2:
+        if ctx.env.LIBCSP_PYTHON2:
             ctx.shlib(source = ['src/bindings/python/pycsp.c'],
                       target = 'csp_py2',
                       includes = ctx.env.INCLUDES_CSP + ctx.env.INCLUDES_PYTHON2,
