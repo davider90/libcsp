@@ -206,6 +206,34 @@ static PyObject* pycsp_transaction(PyObject *self, PyObject *args) {
     return Py_BuildValue("i", result);
 }
 
+/* int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint32_t opts, csp_packet_t *packet, uint32_t timeout); */
+static PyObject* pycsp_sendto(PyObject *self, PyObject *args) {
+    uint8_t prio;
+    uint8_t dest;
+    uint8_t dport;
+    uint8_t src_port;
+    uint32_t opts;
+    PyObject* packet_capsule;
+    uint32_t timeout;
+    if (!PyArg_ParseTuple(args, "bbbbIOI", &prio, &dest, &dport, &src_port, &opts, &packet_capsule, &timeout)) {
+        Py_RETURN_NONE;
+    }
+
+    void* packet = PyCapsule_GetPointer(packet_capsule, "csp_packet_t");
+    if (packet == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    return Py_BuildValue("i", csp_sendto(prio,
+                dest,
+                dport,
+                src_port,
+                opts,
+                (csp_packet_t*)packet,
+                timeout));
+}
+
+
 /*
  * int csp_sendto_reply(csp_packet_t * request_packet,
  *                      csp_packet_t * reply_packet,
@@ -786,6 +814,7 @@ static PyMethodDef methods[] = {
     {"read", pycsp_read, METH_VARARGS, ""},
     {"transaction", pycsp_transaction, METH_VARARGS, ""},
     {"sendto_reply", pycsp_sendto_reply, METH_VARARGS, ""},
+    {"sendto", pycsp_sendto, METH_VARARGS, ""},
     {"close", pycsp_close, METH_O, ""},
     {"conn_dport", pycsp_conn_dport, METH_O, ""},
     {"conn_sport", pycsp_conn_sport, METH_O, ""},
