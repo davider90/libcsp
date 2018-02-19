@@ -771,7 +771,7 @@ static PyObject* pycsp_packet_set_data(PyObject *self, PyObject *args) {
 
     csp_packet_t* packet = PyCapsule_GetPointer(packet_capsule, "csp_packet_t");
 
-    strncpy((char *)packet->data, data.buf, data.len);
+    memcpy((char *)packet->data, data.buf, data.len);
     packet->length = data.len;
 
     Py_RETURN_NONE;
