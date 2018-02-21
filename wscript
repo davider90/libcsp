@@ -274,7 +274,7 @@ def build(ctx):
 
     # Build shared library for Python bindings
     if ctx.env.ENABLE_BINDINGS:
-        ctx.shlib(source = ctx.path.ant_glob(ctx.env.FILES_CSP),
+        ctx.shlib(source = ctx.path.ant_glob(ctx.env.FILES_CSP, excl=ctx.env.EXCL_CSP),
                   name = 'csp_shlib',
                   target = 'csp',
                   includes = ctx.env.INCLUDES_CSP,
