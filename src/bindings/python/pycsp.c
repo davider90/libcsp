@@ -184,6 +184,33 @@ static PyObject* pycsp_read(PyObject *self, PyObject *args) {
 }
 
 /*
+* int csp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout)
+*/
+static PyObject* pycsp_send(PyObject *self, PyObject *args) {
+    PyObject* conn_capsule;
+    PyObject* packet_capsule;
+    uint32_t timeout = 500;
+    if (!PyArg_ParseTuple(args, "OO|I", &conn_capsule, &packet_capsule, &timeout)) {
+        return NULL; // TypeError is thrown
+    }
+
+    if (!is_capsule_of_type(conn_capsule, "csp_conn_t")) {
+        return NULL; // TypeError is thrown
+    }
+
+    void* packet = PyCapsule_GetPointer(packet_capsule, "csp_packet_t");
+    if (packet == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    void* conn = PyCapsule_GetPointer(conn_capsule, "csp_conn_t");
+
+    int result = csp_send(conn, packet, timeout);
+
+    return Py_BuildValue("i", result);
+}
+
+/*
  * int csp_transaction(uint8_t prio, uint8_t dest, uint8_t port,
  *                     uint32_t timeout, void *outbuf, int outlen,
  *                     void *inbuf, int inlen);
@@ -260,6 +287,24 @@ static PyObject* pycsp_sendto_reply(PyObject *self, PyObject *args) {
                                                (csp_packet_t*)reply_packet,
                                                opts,
                                                timeout));
+}
+
+/*
+ * csp_conn_t *csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t timeout, uint32_t opts);
+ */
+static PyObject* pycsp_connect(PyObject *self, PyObject *args) {
+    uint8_t prio;
+    uint8_t dest;
+    uint8_t dport;
+    uint32_t timeout;
+    uint32_t opts;
+    if (!PyArg_ParseTuple(args, "bbbII", &prio, &dest, &dport, &timeout, &opts)) {
+        return NULL; // TypeError is thrown
+    }
+
+    csp_conn_t *conn = csp_connect(prio, dest, dport, timeout,opts);
+
+    return PyCapsule_New(conn, "csp_conn_t", NULL);
 }
 
 /*
@@ -812,9 +857,11 @@ static PyMethodDef methods[] = {
     {"socket", pycsp_socket, METH_VARARGS, ""},
     {"accept", pycsp_accept, METH_VARARGS, ""},
     {"read", pycsp_read, METH_VARARGS, ""},
+    {"send", pycsp_send, METH_VARARGS, ""},
     {"transaction", pycsp_transaction, METH_VARARGS, ""},
     {"sendto_reply", pycsp_sendto_reply, METH_VARARGS, ""},
     {"sendto", pycsp_sendto, METH_VARARGS, ""},
+    {"connect", pycsp_connect, METH_VARARGS, ""},
     {"close", pycsp_close, METH_O, ""},
     {"conn_dport", pycsp_conn_dport, METH_O, ""},
     {"conn_sport", pycsp_conn_sport, METH_O, ""},
