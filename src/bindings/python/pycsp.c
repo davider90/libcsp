@@ -551,6 +551,31 @@ static PyObject* pycsp_rtable_clear(PyObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+/*
+* int csp_rtable_check(const char * buffer)
+*/
+static PyObject* pycsp_rtable_check(PyObject *self, PyObject *args) {
+    char* buffer;
+    if (!PyArg_ParseTuple(args, "s", &buffer)) {
+        return NULL; // TypeError is thrown
+    }
+
+    return Py_BuildValue("i", csp_rtable_check(buffer));
+}
+
+/*
+* void csp_rtable_load(const char * buffer)
+*/
+static PyObject* pycsp_rtable_load(PyObject *self, PyObject *args) {
+    char* buffer;
+    if (!PyArg_ParseTuple(args, "s", &buffer)) {
+        return NULL; // TypeError is thrown
+    }
+
+    csp_rtable_load(buffer);
+    Py_RETURN_NONE;
+}
+
 /**
  * csp/csp_buffer.h
  */
@@ -880,6 +905,8 @@ static PyMethodDef methods[] = {
     /* csp/csp_rtable.h */
     {"rtable_set", pycsp_rtable_set, METH_VARARGS, ""},
     {"rtable_clear", pycsp_rtable_clear, METH_NOARGS, ""},
+    {"rtable_check", pycsp_rtable_check, METH_VARARGS, ""},
+    {"rtable_load", pycsp_rtable_load, METH_VARARGS, ""},
 
     /* csp/csp_buffer.h */
     {"buffer_init", pycsp_buffer_init, METH_VARARGS, ""},
