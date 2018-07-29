@@ -163,6 +163,23 @@ int csp_send_prio(uint8_t prio, csp_conn_t *conn, csp_packet_t *packet, uint32_t
 int csp_transaction(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void *outbuf, int outlen, void *inbuf, int inlen);
 
 /**
+ * Perform an entire request/reply transaction
+ * Copies both input buffer and reply to output buffeer.
+ * Also makes the connection and closes it again
+ * @param prio CSP Prio
+ * @param dest CSP Dest
+ * @param port CSP Port
+ * @param timeout timeout in ms
+ * @param outbuf pointer to outgoing data buffer
+ * @param outlen length of request to send
+ * @param inbuf pointer to incoming data buffer
+ * @param inlen length of expected reply, -1 for unknown size (note inbuf MUST be large enough)
+ * @param opts Connection options.
+ * @return Return 1 or reply size if successful, 0 if error or incoming length does not match or -1 if timeout was reached
+ */
+int csp_transaction2(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void *outbuf, int outlen, void *inbuf, int inlen, uint32_t opts);
+
+/**
  * Use an existing connection to perform a transaction,
  * This is only possible if the next packet is on the same port and destination!
  * @param conn pointer to connection structure

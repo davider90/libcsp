@@ -410,12 +410,15 @@ int csp_transaction_persistent(csp_conn_t * conn, uint32_t timeout, void * outbu
 	int length = packet->length;
 	csp_buffer_free(packet);
 	return length;
-
 }
 
 int csp_transaction(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen) {
+    return csp_transaction2(prio, dest, port, timeout, outbuf, outlen, inbuf, inlen, 0);
+}
 
-	csp_conn_t * conn = csp_connect(prio, dest, port, 0, CSP_CONNECTION_SO);
+int csp_transaction2(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen, uint32_t opts) {
+
+	csp_conn_t * conn = csp_connect(prio, dest, port, 0, CSP_CONNECTION_SO | opts);
 	if (conn == NULL)
 		return 0;
 
