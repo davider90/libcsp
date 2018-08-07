@@ -418,7 +418,7 @@ int csp_transaction(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, 
 
 int csp_transaction2(uint8_t prio, uint8_t dest, uint8_t port, uint32_t timeout, void * outbuf, int outlen, void * inbuf, int inlen, uint32_t opts) {
 
-	csp_conn_t * conn = csp_connect(prio, dest, port, 0, CSP_CONNECTION_SO | opts);
+	csp_conn_t * conn = csp_connect(prio, dest, port, 0, opts);
 	if (conn == NULL)
 		return 0;
 

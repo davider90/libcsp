@@ -320,6 +320,10 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 	outgoing_id.flags = 0;
 
 	/* Set connection options */
+        if (opts & CSP_O_NOCRC32) {
+                opts &= ~CSP_O_CRC32;
+        }
+
 	if (opts & CSP_O_RDP) {
 #ifdef CSP_USE_RDP
 		incoming_id.flags |= CSP_FRDP;
