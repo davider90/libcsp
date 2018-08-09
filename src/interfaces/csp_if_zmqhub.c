@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_debug.h>
 #include <csp/csp_interface.h>
 #include <csp/arch/csp_thread.h>
+#include <csp/arch/csp_semaphore.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 
 /* ZMQ */
@@ -33,11 +34,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 static void * context;
 static void * publisher;
 static void * subscriber;
+static csp_bin_sem_handle_t tx_wait;
 
 /**
  * Interface transmit function
  * @param packet Packet to transmit
- * @param timeout Timout in ms
+ * @param timeout Timeout in ms
  * @return 1 if packet was successfully transmitted, 0 on error
  */
 int csp_zmqhub_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout) {
@@ -50,7 +52,9 @@ int csp_zmqhub_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeo
 	uint16_t length = packet->length;
 	char * satidptr = ((char *) &packet->id) - 1;
 	memcpy(satidptr, &satid, 1);
+	csp_bin_sem_wait(&tx_wait, CSP_INFINITY); /* Using ZMQ in thread safe manner*/
 	int result = zmq_send(publisher, satidptr, length + sizeof(packet->id) + sizeof(char), 0);
+	csp_bin_sem_post(&tx_wait); /* Release tx semaphore */
 	if (result < 0)
 		csp_log_error("ZMQ send error: %u %s\r\n", result, strerror(result));
 
@@ -139,13 +143,17 @@ int csp_zmqhub_init_w_endpoints(char _addr, char * publisher_endpoint,
 	} else {
 		assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, &addr, 1) == 0);
 	}
-
+	/* ZMQ isn't thread safe, so we add a binary semaphore to wait on for tx */
+	if (csp_bin_sem_create(&tx_wait) != CSP_SEMAPHORE_OK) {
+		csp_log_error("Failed to initialize semaphore in csp_zmqhub_init_w_endpoints");
+		return CSP_ERR_NOMEM;
+	}
 	/* Start RX thread */
 	static csp_thread_handle_t handle_subscriber;
 	int ret = csp_thread_create(csp_zmqhub_task, "ZMQ", 20000, NULL, 0, &handle_subscriber);
 	csp_log_info("Task start %d\r\n", ret);
 
-	/* Regsiter interface */
+	/* Register interface */
 	csp_iflist_add(&csp_if_zmqhub);
 
 	return CSP_ERR_NONE;
