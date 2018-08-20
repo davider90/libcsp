@@ -223,9 +223,13 @@ csp_conn_t * csp_conn_allocate(csp_conn_type_t type) {
 		return NULL;
 	}
 
-	conn->state = CONN_OPEN;
+	conn->idin.ext = 0;
+	conn->idout.ext = 0;
 	conn->socket = NULL;
+        conn->timestamp = 0;
 	conn->type = type;
+	conn->state = CONN_OPEN;
+
 	csp_conn_last_given = i;
 	csp_bin_sem_post(&conn_lock);
 

@@ -493,7 +493,8 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	uint32_t time_now = csp_get_ms();
 	if (conn->socket != NULL) {
 		if (csp_rdp_time_after(time_now, conn->timestamp + conn->rdp.conn_timeout)) {
-			csp_log_warn("Found a lost connection, closing now");
+			csp_log_warn("RDP: Found a lost connection %p (now: %u, ts: %u, to: %u), closing now",
+                                     conn, time_now, conn->timestamp, conn->rdp.conn_timeout);
 			csp_close(conn);
 			return;
 		}
