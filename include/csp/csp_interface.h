@@ -41,8 +41,6 @@ extern "C" {
  * that a packet will always be either accepted or dropped
  * so the memory will always be freed.
  *
- * This functions replaces csp_new_packet().
- *
  * @param packet A pointer to the incoming packet
  * @param interface A pointer to the incoming interface TX function.
  * @param pxTaskWoken This must be a pointer a valid variable if called from ISR or NULL otherwise!
