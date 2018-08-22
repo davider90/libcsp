@@ -470,7 +470,7 @@ int csp_rdp_check_ack(csp_conn_t * conn) {
 static inline bool csp_rdp_is_conn_ready_for_tx(csp_conn_t * conn)
 {
 	// Check Tx window (messages waiting for acks)
-	if (csp_rdp_seq_after(conn->rdp.snd_nxt, conn->rdp.snd_una + (uint16_t)conn->rdp.window_size)) {
+	if (csp_rdp_seq_after(conn->rdp.snd_nxt, conn->rdp.snd_una + conn->rdp.window_size - 1)) {
 		return false;
 	}
 	return true;
@@ -562,19 +562,15 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	 * ACK TIMEOUT:
 	 * Check ACK timeouts, if we have unacknowledged segments
 	 */
-
 	if (conn->rdp.delayed_acks) {
-	  csp_rdp_check_ack(conn);
+		csp_rdp_check_ack(conn);
 	}
 
-
-	/* Wake user task if additional TX can be done */
-	if (conn->rdp.state == RDP_OPEN) {
-		if (csp_rdp_is_conn_ready_for_tx(conn)) {
-			csp_log_protocol("RDP %p: Wake Tx task (check timeouts)", conn);
-			csp_bin_sem_post(&conn->rdp.tx_wait);
-                }
-        }
+	/* Wake user task if additional TX can be done - ignore state, as user task should also be woken if state changes */
+	if (csp_rdp_is_conn_ready_for_tx(conn)) {
+		csp_log_protocol("RDP %p: Wake Tx task (check timeouts)", conn);
+		csp_bin_sem_post(&conn->rdp.tx_wait);
+	}
 }
 
 void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
@@ -1046,6 +1042,7 @@ int csp_rdp_close(csp_conn_t * conn) {
 		conn->timestamp = csp_get_ms();
 		csp_rdp_send_cmp(conn, NULL, RDP_ACK | RDP_RST, conn->rdp.snd_nxt, conn->rdp.rcv_cur);
 		csp_log_protocol("RDP Close, sent RST on conn %p", conn);
+		csp_bin_sem_post(&conn->rdp.tx_wait); // wake up any pendng Tx
 		return CSP_ERR_AGAIN;
 	}
 
