@@ -566,8 +566,8 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 		csp_rdp_check_ack(conn);
 	}
 
-	/* Wake user task if additional TX can be done - ignore state, as user task should also be woken if state changes */
-	if (csp_rdp_is_conn_ready_for_tx(conn)) {
+	/* Wake user task if connection is open and additional Tx can be done */
+	if ((conn->rdp.state == RDP_OPEN) && csp_rdp_is_conn_ready_for_tx(conn)) {
 		csp_log_protocol("RDP %p: Wake Tx task (check timeouts)", conn);
 		csp_bin_sem_post(&conn->rdp.tx_wait);
 	}
