@@ -108,7 +108,7 @@ int csp_can_tx_frame(csp_iface_t *interface, uint32_t id, const uint8_t * data, 
 {
 	struct can_frame frame;
 	int i, tries = 0;
-
+	memset(&frame, 0, sizeof(frame));
 	if (dlc > 8)
 		return -1;
 
@@ -166,7 +166,7 @@ csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc)
 		csp_log_error("ioctl: %s", strerror(errno));
 		return NULL;
 	}
-
+	memset(&addr, 0, sizeof(addr));
 	/* Bind the socket to CAN interface */
 	addr.can_family = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex;
