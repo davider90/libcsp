@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define TFESC 					0xDD
 
 #define TNC_DATA				0x00
+#define TNC_SET_HARDWARE		0x06
+#define TNC_RETURN				0xFF
 
 static int kiss_lock_init = 0;
 static csp_bin_sem_handle_t kiss_lock;
@@ -85,7 +87,8 @@ static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t 
 }
 
 /**
- * Decode received data and eventually route the packet.
+ * When a frame is received, decode the kiss-stuff
+ * and eventually send it directly to the CSP new packet function.
  */
 void csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, int len, void * pxTaskWoken) {
 
@@ -98,8 +101,8 @@ void csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, int len, void * pxTaskW
 		unsigned char inputbyte = *buf++;
 
 		/* If packet was too long */
-		if (driver->rx_length > interface->mtu + CSP_HEADER_LENGTH) {
-			csp_log_warn("KISS RX overflow");
+		if (driver->rx_length > interface->mtu) {
+			//csp_log_warn("KISS RX overflow");
 			interface->rx_error++;
 			driver->rx_mode = KISS_MODE_NOT_STARTED;
 			driver->rx_length = 0;
@@ -153,7 +156,7 @@ void csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, int len, void * pxTaskW
 
 					/* Check for valid length */
 					if (driver->rx_length < CSP_HEADER_LENGTH + sizeof(uint32_t)) {
-						csp_log_warn("KISS short frame skipped, len: %u", driver->rx_length);
+						//csp_log_warn("KISS short frame skipped, len: %u", driver->rx_length);
 						interface->rx_error++;
 						driver->rx_mode = KISS_MODE_NOT_STARTED;
 						break;
@@ -170,7 +173,7 @@ void csp_kiss_rx(csp_iface_t * interface, uint8_t * buf, int len, void * pxTaskW
 
 					/* Validate CRC */
 					if (csp_crc32_verify(driver->rx_packet, false) != CSP_ERR_NONE) {
-						csp_log_warn("KISS invalid crc frame skipped, len: %u", driver->rx_packet->length);
+						//csp_log_warn("KISS invalid crc frame skipped, len: %u", driver->rx_packet->length);
 						interface->rx_error++;
 						driver->rx_mode = KISS_MODE_NOT_STARTED;
 						break;
@@ -242,10 +245,10 @@ void csp_kiss_init(csp_iface_t * csp_iface, csp_kiss_handle_t * csp_kiss_handle,
 	csp_kiss_handle->rx_packet = NULL;
 	csp_kiss_handle->rx_mode = KISS_MODE_NOT_STARTED;
 
-	/* Set default MTU if not given */
-	if (csp_iface->mtu == 0) {
-		csp_iface->mtu = KISS_MTU;
-	}
+        /* Set default MTU if not given */
+        if (csp_iface->mtu == 0) {
+            csp_iface->mtu = KISS_MTU;
+        }
 
 	/* Setup other mandatories */
 	csp_iface->nexthop = csp_kiss_tx;
