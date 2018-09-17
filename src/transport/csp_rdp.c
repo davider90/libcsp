@@ -995,7 +995,7 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
 int csp_rdp_allocate(csp_conn_t * conn) {
 
-	csp_log_buffer("RDP: Creating RDP queues for conn %p", conn);
+	csp_log_protocol("RDP: Creating RDP queues for conn %p", conn);
 
 	/* Set initial state */
 	conn->rdp.state = RDP_CLOSED;
