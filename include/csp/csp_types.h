@@ -22,13 +22,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define CSP_TYPES_H_
 
 #include <stdint.h>
-
-#include <csp/csp_autoconfig.h>
-
-/* Make bool for compilers without stdbool.h */
+#include <csp/csp_autoconfig.h> // -> CSP_HAVE_X defines
 #ifdef CSP_HAVE_STDBOOL_H
 #include <stdbool.h>
-#else
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Make bool for compilers without stdbool.h */
+#ifndef CSP_HAVE_STDBOOL_H
 #define bool int
 #define false 0
 #define true !false
@@ -223,4 +227,7 @@ typedef struct csp_conn_s csp_conn_t;
 #define CSP_REBOOT_MAGIC		0x80078007
 #define CSP_REBOOT_SHUTDOWN_MAGIC	0xD1E5529A
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* CSP_TYPES_H_ */

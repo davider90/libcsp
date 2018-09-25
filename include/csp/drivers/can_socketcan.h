@@ -10,6 +10,13 @@
 
 #include <csp/csp_types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* LIB_CSP_INCLUDE_CSP_DRIVERS_CAN_SOCKETCAN_H_ */

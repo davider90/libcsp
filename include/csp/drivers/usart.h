@@ -30,6 +30,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
    Usart configuration, to be used with the usart_init call.
 */
@@ -97,4 +101,7 @@ void usart_putstr(char *buf, int len);
 */
 char usart_getc(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* USART_H_ */
