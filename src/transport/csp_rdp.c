@@ -597,19 +597,19 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		}
 
 		if (conn->rdp.state == RDP_CLOSE_WAIT || conn->rdp.state == RDP_CLOSED) {
-			csp_log_protocol("RST received in CLOSE_WAIT or CLOSED. Now closing connection");
+			csp_log_protocol("RDP %p: RST received in CLOSE_WAIT or CLOSED. Now closing connection", conn);
 			goto discard_close;
 		} else {
-			csp_log_protocol("Got RESET in state %u", conn->rdp.state);
+			csp_log_protocol("RDP %p: Got RESET in state %u", conn, conn->rdp.state);
 
 			if (rx_header->seq_nr == (uint16_t)(conn->rdp.rcv_cur + 1)) {
-				csp_log_protocol("RESET in sequence, no more data incoming, reply with RESET");
+				csp_log_protocol("RDP %p: RESET in sequence, no more data incoming, reply with RESET", conn);
 				conn->rdp.state = RDP_CLOSE_WAIT;
 				conn->timestamp = csp_get_ms();
 				csp_rdp_send_cmp(conn, NULL, RDP_ACK | RDP_RST, conn->rdp.snd_nxt, conn->rdp.rcv_cur);
 				goto discard_close;
 			} else {
-				csp_log_protocol("RESET out of sequence, keep connection open");
+				csp_log_protocol("RDP %p: RESET out of sequence, keep connection open", conn);
 				goto discard_open;
 			}
 		}
@@ -862,7 +862,7 @@ discard_close:
 	/* If user-space has received the connection handle, wake it up,
 	 * by sending a NULL pointer, user-space should close connection */
 	if (conn->socket == NULL) {
-		csp_log_protocol("Waiting for userspace to close");
+		csp_log_protocol("RDP %p: Waiting for userspace to close", conn);
 		csp_conn_enqueue_packet(conn, NULL);
 	} else {
 		csp_close(conn);
@@ -1043,12 +1043,12 @@ int csp_rdp_close(csp_conn_t * conn) {
 		conn->rdp.state = RDP_CLOSE_WAIT;
 		conn->timestamp = csp_get_ms();
 		csp_rdp_send_cmp(conn, NULL, RDP_ACK | RDP_RST, conn->rdp.snd_nxt, conn->rdp.rcv_cur);
-		csp_log_protocol("RDP Close, sent RST on conn %p", conn);
+		csp_log_protocol("RDP %p: Close, sent RST", conn);
 		csp_bin_sem_post(&conn->rdp.tx_wait); // wake up any pendng Tx
 		return CSP_ERR_AGAIN;
 	}
 
-	csp_log_protocol("RDP Close in CLOSE_WAIT, now closing");
+	csp_log_protocol("RDP %p: Close in CLOSE_WAIT, now closing", conn);
 	conn->rdp.state = RDP_CLOSED;
 	return CSP_ERR_NONE;
 
