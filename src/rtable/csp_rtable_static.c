@@ -110,6 +110,13 @@ void csp_rtable_free_resources(void) {
 
 }
 
+void csp_rtable_load(const char * buffer) {
+}
+
+int csp_rtable_check(const char * buffer) {
+	return -1;
+}
+
 #ifdef CSP_DEBUG
 void csp_rtable_print(void) {
 	int i;

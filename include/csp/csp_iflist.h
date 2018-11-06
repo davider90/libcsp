@@ -21,6 +21,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CSP_IFLIST_H_
 #define CSP_IFLIST_H_
 
+#include <csp/csp_types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Add interface to list
  * @param ifc Pointer to interface to add
@@ -39,4 +45,12 @@ csp_iface_t * csp_iflist_get_by_name(const char *name);
  */
 void csp_iflist_print(void);
 
+/**
+ * Return list of registered interfaces.
+ */
+csp_iface_t * csp_iflist_get(void);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* CSP_IFLIST_H_ */

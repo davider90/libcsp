@@ -56,6 +56,11 @@ void csp_iflist_add(csp_iface_t *ifc) {
 
 }
 
+csp_iface_t * csp_iflist_get(void)
+{
+    return interfaces;
+}
+
 #ifdef CSP_DEBUG
 static int csp_bytesize(char *buf, int len, unsigned long int n) {
 	char postfix;

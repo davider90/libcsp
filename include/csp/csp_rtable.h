@@ -21,7 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CSP_RTABLE_H_
 #define CSP_RTABLE_H_
 
-#include <csp/csp_types.h>
+#include <csp/csp_iflist.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define CSP_NODE_MAC				0xFF
 #define CSP_ROUTE_COUNT				(CSP_ID_HOST_MAX + 2)
@@ -145,4 +149,7 @@ void csp_rtable_free_resources(void);
  */
 #define csp_route_print_interfaces() csp_iflist_print();
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* CSP_RTABLE_H_ */
