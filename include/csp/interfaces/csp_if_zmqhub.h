@@ -15,7 +15,7 @@ extern csp_iface_t csp_if_zmqhub;
  * @param host Pointer to string containing zmqproxy host
  * @return CSP_ERR
  */
-int csp_zmqhub_init(char addr, char * host);
+int csp_zmqhub_init(uint8_t addr, const char * host);
 
 /**
  * Setup ZMQ interface
@@ -24,8 +24,8 @@ int csp_zmqhub_init(char addr, char * host);
  * @param subscriber_endpoint Pointer to string containing zmqproxy subscriber endpoint
  * @return CSP_ERR
  */
-int csp_zmqhub_init_w_endpoints(char _addr, char * publisher_url,
-		char * subscriber_url);
+int csp_zmqhub_init_w_endpoints(uint8_t addr, const char * publisher_url,
+		const char * subscriber_url);
 
 #ifdef __cplusplus
 } /* extern "C" */

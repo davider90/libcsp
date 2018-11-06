@@ -46,15 +46,15 @@ static csp_bin_sem_handle_t tx_wait;
 int csp_zmqhub_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout) {
 
 	/* Send envelope */
-	char satid = (char) csp_rtable_find_mac(packet->id.dst);
-	if (satid == (char) 255)
-		satid = packet->id.dst;
+	uint8_t dest = csp_rtable_find_mac(packet->id.dst);
+	if (dest == CSP_NODE_MAC)
+		dest = packet->id.dst;
 
 	uint16_t length = packet->length;
-	char * satidptr = ((char *) &packet->id) - 1;
-	memcpy(satidptr, &satid, 1);
+	uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(dest);
+	memcpy(destptr, &dest, sizeof(dest));
 	csp_bin_sem_wait(&tx_wait, CSP_INFINITY); /* Using ZMQ in thread safe manner*/
-	int result = zmq_send(publisher, satidptr, length + sizeof(packet->id) + sizeof(char), 0);
+	int result = zmq_send(publisher, destptr, length + sizeof(packet->id) + sizeof(dest), 0);
 	csp_bin_sem_post(&tx_wait); /* Release tx semaphore */
 	if (result < 0)
 		csp_log_error("ZMQ send error: %u %s\r\n", result, strerror(result));
@@ -94,9 +94,9 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		}
 
 		/* Copy the data from zmq to csp */
-		char * satidptr = ((char *) &packet->id) - 1;
-		memcpy(satidptr, zmq_msg_data(&msg), datalen);
-		packet->length = datalen - 4 - 1;
+		uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(*destptr);
+		memcpy(destptr, zmq_msg_data(&msg), datalen);
+		packet->length = datalen - sizeof(packet->id) - sizeof(*destptr);
 
 		/* Queue up packet to router */
 		csp_qfifo_write(packet, &csp_if_zmqhub, NULL);
@@ -108,26 +108,24 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 }
 
-int csp_zmqhub_init(char _addr, char * host) {
+int csp_zmqhub_init(uint8_t addr, const char * host) {
 	char url_pub[100];
 	char url_sub[100];
 
 	sprintf(url_pub, "tcp://%s:6000", host);
 	sprintf(url_sub, "tcp://%s:7000", host);
 
-	return csp_zmqhub_init_w_endpoints(_addr, url_pub, url_sub);
+	return csp_zmqhub_init_w_endpoints(addr, url_pub, url_sub);
 }
 
-int csp_zmqhub_init_w_endpoints(char _addr, char * publisher_endpoint,
-		char * subscriber_endpoint) {
+int csp_zmqhub_init_w_endpoints(uint8_t addr, const char * publisher_endpoint,
+		const char * subscriber_endpoint) {
 
 	context = zmq_ctx_new();
 	assert(context);
 
-	char addr = _addr;
-
-	csp_log_info("INIT ZMQ with addr %hhu to servers %s / %s\r\n", addr,
-		publisher_endpoint, subscriber_endpoint);
+	csp_log_info("INIT ZMQ with addr %u to servers %s / %s\r\n",
+		addr, publisher_endpoint, subscriber_endpoint);
 
 	/* Publisher (TX) */
 	publisher = zmq_socket(context, ZMQ_PUB);
@@ -139,8 +137,8 @@ int csp_zmqhub_init_w_endpoints(char _addr, char * publisher_endpoint,
 	assert(subscriber);
 	assert(zmq_connect(subscriber, subscriber_endpoint) == 0);
 
-	if (addr == (char) 255) {
-		assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, "", 0) == 0);
+	if (addr == CSP_NODE_MAC) { // == 255
+		assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, NULL, 0) == 0);
 	} else {
 		assert(zmq_setsockopt(subscriber, ZMQ_SUBSCRIBE, &addr, 1) == 0);
 	}
