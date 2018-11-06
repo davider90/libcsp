@@ -66,22 +66,28 @@ def options(ctx):
     gr.add_option('--enable-init-shutdown', action='store_true', help='Use init system commands for shutdown/reboot')
 
     # Options
+    gr.add_option('--with-rdp-max-window', metavar='SIZE', type=int, default=20, help='Set maximum window size for RDP')
+    gr.add_option('--with-max-bind-port', metavar='PORT', type=int, default=31, help='Set maximum bindable port')
+    gr.add_option('--with-max-connections', metavar='COUNT', type=int, default=10, help='Set maximum number of concurrent connections')
+    gr.add_option('--with-conn-queue-length', metavar='SIZE', type=int, default=100, help='Set maximum number of packets in queue for a connection')
+    gr.add_option('--with-router-queue-length', metavar='SIZE', type=int, default=10, help='Set maximum number of packets to be queued at the input of the router')
+    gr.add_option('--with-padding', metavar='BYTES', type=int, default=8, help='Set padding bytes before packet length field')
     gr.add_option('--with-loglevel', metavar='LEVEL', default='debug', help='Set minimum compile time log level. Must be one of \'error\', \'warn\', \'info\' or \'debug\'')
-    gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type: \'static\' or \'cidr\'')
+    gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type')
+    gr.add_option('--with-connection-so', metavar='CSP_SO', type=int, default='0x0000', help='Set outgoing connection socket options, see csp.h for valid values')
+    gr.add_option('--with-bufalign', metavar='BYTES', type=int, help='Set buffer alignment')
 
 def configure(ctx):
-    # Validate options
+    # Validate OS
     if not ctx.options.with_os in ('posix', 'windows', 'freertos', 'macosx'):
         ctx.fatal('--with-os must be either \'posix\', \'windows\', \'macosx\' or \'freertos\'')
 
+    # Validate USART drivers
     if not ctx.options.with_driver_usart in (None, 'windows', 'linux'):
         ctx.fatal('--with-driver-usart must be either \'windows\' or \'linux\'')
 
     if not ctx.options.with_loglevel in ('error', 'warn', 'info', 'debug'):
         ctx.fatal('--with-loglevel must be either \'error\', \'warn\', \'info\' or \'debug\'')
-
-    if not ctx.options.with_rtable in ('static', 'cidr'):
-        ctx.fatal('--with-rtable must be either \'static\' or \'cidr\'')
 
     # Setup and validate toolchain
     if (len(ctx.stack_path) <= 1) and ctx.options.toolchain:
@@ -200,6 +206,20 @@ def configure(ctx):
     ctx.define_cond('CSP_USE_QOS', ctx.options.enable_qos)
     ctx.define_cond('CSP_USE_DEDUP', ctx.options.enable_dedup)
     ctx.define_cond('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
+    ctx.define_cond('CSP_USE_CAN', ctx.options.enable_if_can)
+    ctx.define_cond('CSP_USE_I2C', ctx.options.enable_if_i2c)
+    ctx.define_cond('CSP_USE_KISS', ctx.options.enable_if_kiss)
+    ctx.define_cond('CSP_USE_ZMQHUB', ctx.options.enable_if_zmqhub)
+    ctx.define('CSP_CONN_MAX', ctx.options.with_max_connections)
+    ctx.define('CSP_CONN_QUEUE_LENGTH', ctx.options.with_conn_queue_length)
+    ctx.define('CSP_FIFO_INPUT', ctx.options.with_router_queue_length)
+    ctx.define('CSP_MAX_BIND_PORT', ctx.options.with_max_bind_port)
+    ctx.define('CSP_RDP_MAX_WINDOW', ctx.options.with_rdp_max_window)
+    ctx.define('CSP_PADDING_BYTES', ctx.options.with_padding)
+    ctx.define('CSP_CONNECTION_SO', ctx.options.with_connection_so)
+    
+    if ctx.options.with_bufalign != None:
+        ctx.define('CSP_BUFFER_ALIGN', ctx.options.with_bufalign)
 
     # Set logging level
     ctx.define_cond('CSP_LOG_LEVEL_DEBUG', ctx.options.with_loglevel in ('debug'))
