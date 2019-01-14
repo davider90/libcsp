@@ -369,7 +369,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 	}
 
 	/* Find an unused ephemeral port */
-	csp_conn_t * conn;
+	csp_conn_t * conn = NULL;
 
 	/* Wait for sport lock - note that csp_conn_new(..) is called inside the lock! */
 	if (csp_bin_sem_wait(&sport_lock, 1000) != CSP_SEMAPHORE_OK)
@@ -385,16 +385,11 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 
 		/* Match on destination port of _incoming_ identifier */
 		if (csp_conn_find(incoming_id.ext, CSP_ID_DPORT_MASK) == NULL) {
-			/* Break - we found an unused ephemeral port */
+			/* Break - we found an unused ephemeral port
+                           allocate connection while locked to mark port in use */
+			conn = csp_conn_new(incoming_id, outgoing_id);
 			break;
 		}
-	}
-
-	/* If available ephemeral port was found, allocate connection */
-	if (sport != start) {
-		conn = csp_conn_new(incoming_id, outgoing_id);
-	} else {
-		conn = NULL;
 	}
 
 	/* Post sport lock */
