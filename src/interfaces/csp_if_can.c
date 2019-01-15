@@ -119,9 +119,9 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 		} else {
 			/* Allocate memory for frame */
 			if (task_woken == NULL) {
-				buf->packet = csp_buffer_get(CSP_CAN_MTU);
+				buf->packet = csp_buffer_get(interface->mtu);
 			} else {
-				buf->packet = csp_buffer_get_isr(CSP_CAN_MTU);
+				buf->packet = csp_buffer_get_isr(interface->mtu);
 			}
 			if (buf->packet == NULL) {
 				//csp_log_error("Failed to get buffer for CSP_BEGIN packet");

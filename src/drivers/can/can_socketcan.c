@@ -61,7 +61,7 @@ static struct can_socketcan_s {
 		.interface = {
 			.name = "CAN",
 			.nexthop = csp_can_tx,
-			.mtu = CSP_CAN_MTU,
+			.mtu = CSP_CAN_DEFAULT_MTU,
 			.driver = &socketcan[0],
 		},
 	},
