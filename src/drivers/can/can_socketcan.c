@@ -54,6 +54,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 static struct can_socketcan_s {
+	pthread_t rx_thread;
 	int socket;
 	csp_iface_t interface;
 } socketcan[1] = {
@@ -140,7 +141,6 @@ csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc)
 {
 	struct ifreq ifr;
 	struct sockaddr_can addr;
-	pthread_t rx_thread;
 
 	printf("Init can interface %s\n", ifc);
 
@@ -190,7 +190,7 @@ csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc)
 	}
 
 	/* Create receive thread */
-	if (pthread_create(&rx_thread, NULL, socketcan_rx_thread, NULL) != 0) {
+	if (pthread_create(&socketcan[0].rx_thread, NULL, socketcan_rx_thread, NULL) != 0) {
 		csp_log_error("pthread_create: %s", strerror(errno));
 		return NULL;
 	}
@@ -198,4 +198,19 @@ csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc)
 	csp_iflist_add(&socketcan[0].interface);
 
 	return &socketcan[0].interface;
+}
+
+int csp_can_socketcan_stop()
+{
+	int error = pthread_cancel(socketcan[0].rx_thread);
+	if (error != 0) {
+		csp_log_error("pthread_cancel: %s", strerror(errno));
+		return CSP_ERR_DRIVER;
+	}
+	error = pthread_join(socketcan[0].rx_thread, NULL);
+	if (error != 0) {
+		csp_log_error("pthread_join: %s", strerror(errno));
+		return CSP_ERR_DRIVER;
+	}
+	return CSP_ERR_NONE;
 }

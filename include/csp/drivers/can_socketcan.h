@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc);
+int csp_can_socketcan_stop(void);
 
 #ifdef __cplusplus
 }
