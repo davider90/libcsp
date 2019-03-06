@@ -142,7 +142,7 @@ csp_iface_t * csp_can_socketcan_init(const char * ifc, int bitrate, int promisc)
 	struct ifreq ifr;
 	struct sockaddr_can addr;
 
-	printf("Init can interface %s\n", ifc);
+	csp_log_info("INIT CAN: interface: [%s], bitrate: %d, promisc: %d", ifc, bitrate, promisc);
 
 #ifdef CSP_HAVE_LIBSOCKETCAN
 	/* Set interface up */
