@@ -156,13 +156,15 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 	return csp_zmqhub_init_w_name_endpoints_rxfilter("ZMQHUB",
 							 rxfilter, rxfilter_count,
 							 publisher_endpoint,
-							 subscriber_endpoint);
+							 subscriber_endpoint,
+							 NULL);
 }
 
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
                                               const uint8_t rxfilter[], unsigned int rxfilter_count,
                                               const char * publisher_endpoint,
-                                              const char * subscriber_endpoint) {
+                                              const char * subscriber_endpoint,
+                                              csp_iface_t ** return_interface) {
 
 	zmq_driver_t * drv = csp_malloc(sizeof(*drv));
 	assert(drv);
@@ -210,6 +212,10 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 
 	/* Register interface */
 	csp_iflist_add(&drv->interface);
+
+	if (return_interface) {
+		*return_interface = &drv->interface;
+	}
 
 	return CSP_ERR_NONE;
 

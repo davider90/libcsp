@@ -54,12 +54,14 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr, const char * publisher_url,
    @param rx_filter_count Number of Rx filters in \a rx_filter.
    @param publisher_endpoint Pointer to string containing zmqproxy publisher endpoint
    @param subscriber_endpoint Pointer to string containing zmqproxy subscriber endpoint
+   @param[out] return_interface created ZMQ interface
    @return CSP_ERR
 */
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
                                               const uint8_t rx_filter[], unsigned int rx_filter_count,
                                               const char * publisher_endpoint,
-                                              const char * subscriber_endpoint);
+                                              const char * subscriber_endpoint,
+                                              csp_iface_t ** return_interface);
 
 #ifdef __cplusplus
 }
