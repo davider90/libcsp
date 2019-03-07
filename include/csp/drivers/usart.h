@@ -18,15 +18,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/**
- * @file
- * Common USART interface,
- * This file is derived from the Gomspace USART driver,
- * the main difference is the assumption that only one USART will be present on a PC
- */
-
 #ifndef USART_H_
 #define USART_H_
+
+/**
+   @file
+
+   USART driver.
+
+   @note This interface implementation only support ONE open UART connection.
+*/
 
 #include <stdint.h>
 
@@ -53,26 +54,33 @@ struct usart_conf {
 };
 
 /**
-   Initialise UART with the usart_conf data structure
-   @param[in] conf full configuration structure
+   Initialise an UART device.
+
+   On success, a pthread is created/started to read data from the device.
+
+   @param[in] conf UART configuration
+   @return #CSP_ERR_NONE on success
 */
-void usart_init(struct usart_conf *conf);
+int usart_init(const struct usart_conf *conf);
 
 /**
-   In order to catch incoming chars use the callback.
-   Only one callback per interface.
-   @param[in] handle usart[0,1,2,3]
-   @param[in] callback function pointer
+   Callback for returning data to application.
+
+   @param[in] buf data received.
+   @param[in] len data length (number of bytes in \a buf).
+   @param[out] pxTaskWoken can be set, if context switch is required due to received data.
 */
 typedef void (*usart_callback_t) (uint8_t *buf, int len, void *pxTaskWoken);
 
 /**
    Set callback for receiving data.
+
+   @param[in] callback callback. Only one callback is supported.
 */
 void usart_set_callback(usart_callback_t callback);
 
 /**
-   Insert a character to the RX buffer of a usart
+   Insert a character to the RX buffer of the usart
 
    @param[in] c character to insert
    @param[out] pxTaskWoken can be set, if context switch is required due to received data.
@@ -92,10 +100,12 @@ void usart_putc(char c);
    @param[in] buf Pointer to data
    @param[in] len Length of data
 */
-void usart_putstr(char *buf, int len);
+void usart_putstr(const char *buf, int len);
 
 /**
    Buffered getchar (stdin).
+
+   @note Unsafe, because usart_init() creates a Rx thread, which also reads from the device.
 
    @return Character received
 */
