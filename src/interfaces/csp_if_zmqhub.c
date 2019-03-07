@@ -133,10 +133,10 @@ int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_
 
 int csp_zmqhub_init(uint8_t addr, const char * host) {
 	char pub[100];
-	csp_zmqhub_make_endpoint(host, CSP_ZMQHUB_DEFAULT_PROXY_SUBSCRIBE_PORT, pub, sizeof(pub));
+	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_SUBSCRIBE_PORT, pub, sizeof(pub));
 
 	char sub[100];
-	csp_zmqhub_make_endpoint(host, CSP_ZMQHUB_DEFAULT_PROXY_PUBLISH_PORT, sub, sizeof(sub));
+	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_PUBLISH_PORT, sub, sizeof(sub));
 
 	return csp_zmqhub_init_w_endpoints(addr, pub, sub);
 }
@@ -153,7 +153,7 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 		rxfilter_count = 1;
 	}
 
-	return csp_zmqhub_init_w_name_endpoints_rxfilter("ZMQHUB",
+	return csp_zmqhub_init_w_name_endpoints_rxfilter(CSP_ZMQHUB_IF_NAME,
 							 rxfilter, rxfilter_count,
 							 publisher_endpoint,
 							 subscriber_endpoint,
@@ -162,8 +162,8 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
                                               const uint8_t rxfilter[], unsigned int rxfilter_count,
-                                              const char * publisher_endpoint,
-                                              const char * subscriber_endpoint,
+                                              const char * publish_endpoint,
+                                              const char * subscribe_endpoint,
                                               csp_iface_t ** return_interface) {
 
 	zmq_driver_t * drv = csp_malloc(sizeof(*drv));
@@ -176,13 +176,13 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 	strcpy(alloc_name, name);
 	drv->interface.driver = drv;
 	drv->interface.nexthop = csp_zmqhub_tx;
-	drv->interface.mtu = CSP_ZMQ_MTU; // there is actually no no 'max' MTU on ZMQ, but assuming the other end is the same code
+	drv->interface.mtu = CSP_ZMQ_MTU; // there is actually no 'max' MTU on ZMQ, but assuming the other end is based on the same code
 
 	drv->context = zmq_ctx_new();
 	assert(drv->context);
 
-	csp_log_info("INIT %s: pub: [%s], sub: [%s], rx filters: %u",
-		     drv->interface.name, publisher_endpoint, subscriber_endpoint, rxfilter_count);
+	csp_log_info("INIT %s: pub(tx): [%s], sub(rx): [%s], rx filters: %u",
+		     drv->interface.name, publish_endpoint, subscribe_endpoint, rxfilter_count);
 
 	/* Publisher (TX) */
 	drv->publisher = zmq_socket(drv->context, ZMQ_PUB);
@@ -201,8 +201,8 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 	}
 
 	/* Connect to server */
-	assert(zmq_connect(drv->publisher, publisher_endpoint) == 0);
-	assert(zmq_connect(drv->subscriber, subscriber_endpoint) == 0);
+	assert(zmq_connect(drv->publisher, publish_endpoint) == 0);
+	assert(zmq_connect(drv->subscriber, subscribe_endpoint) == 0);
 
 	/* ZMQ isn't thread safe, so we add a binary semaphore to wait on for tx */
 	assert(csp_bin_sem_create(&drv->tx_wait) == CSP_SEMAPHORE_OK);
