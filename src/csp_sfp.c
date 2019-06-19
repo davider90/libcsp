@@ -48,7 +48,7 @@ static sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 	return header;
 }
 
-int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, void * (*memcpyfcn)(void *, const void *, size_t)) {
+int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn) {
 
 	int count = 0;
 	while(count < totalsize) {
@@ -67,7 +67,7 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize,
 		csp_debug(CSP_PROTOCOL, "Sending SFP at %x size %u", data + count, size);
 
 		/* Copy data */
-		(*memcpyfcn)(packet->data, data + count, size);
+		(memcpyfcn)(packet->data, data + count, size);
 		packet->length = size;
 
 		/* Set fragment flag */

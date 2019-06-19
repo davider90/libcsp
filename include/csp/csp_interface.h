@@ -21,11 +21,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_INTERFACE_H_
 #define _CSP_INTERFACE_H_
 
+/**
+   @file
+   Interface.
+*/
+
+#include <csp/csp.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <csp/csp.h>
 
 /**
  * Inputs a new packet into the system

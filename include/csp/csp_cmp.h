@@ -26,13 +26,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP management protocol (CMP).
 */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <csp/csp.h>
 #include <csp/arch/csp_clock.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
    CMP type.
