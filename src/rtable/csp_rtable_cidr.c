@@ -91,12 +91,7 @@ static csp_rtable_t * csp_rtable_find(uint8_t addr, uint8_t netmask, uint8_t exa
 }
 
 void csp_rtable_clear(void) {
-	for (csp_rtable_t * i = rtable; (i);) {
-		void * freeme = i;
-		i = i->next;
-		csp_free(freeme);
-	}
-	rtable = NULL;
+	csp_rtable_free_resources();
 
 	/* Set loopback up again */
 	csp_rtable_set(csp_conf.address, CSP_ID_HOST_SIZE, &csp_if_lo, CSP_NODE_MAC);
@@ -218,6 +213,15 @@ int csp_rtable_set(uint8_t _address, uint8_t _netmask, csp_iface_t *ifc, uint8_t
 	entry->mac = mac;
 
 	return CSP_ERR_NONE;
+}
+
+void csp_rtable_free_resources(void) {
+	for (csp_rtable_t * i = rtable; (i);) {
+		void * freeme = i;
+		i = i->next;
+		csp_free(freeme);
+	}
+	rtable = NULL;
 }
 
 #ifdef CSP_DEBUG

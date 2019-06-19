@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 static csp_queue_handle_t csp_promisc_queue = NULL;
 static int csp_promisc_enabled = 0;
 
-int csp_promisc_enable(unsigned int buf_size) {
+int csp_promisc_enable(unsigned int queue_size) {
 
 	/* If queue already initialised */
 	if (csp_promisc_queue != NULL) {
@@ -35,7 +35,7 @@ int csp_promisc_enable(unsigned int buf_size) {
 	}
 
 	/* Create packet queue */
-	csp_promisc_queue = csp_queue_create(buf_size, sizeof(csp_packet_t *));
+	csp_promisc_queue = csp_queue_create(queue_size, sizeof(csp_packet_t *));
 
 	if (csp_promisc_queue == NULL)
 		return CSP_ERR_INVAL;

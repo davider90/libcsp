@@ -117,6 +117,12 @@ int csp_rtable_check(const char * buffer);
 void csp_rtable_clear(void);
 
 /**
+ * Free allocated resorces (for testing).
+ * This is only to be called from automatic tests, to satisfy tools like valgrind.
+ */
+void csp_rtable_free_resources(void);
+
+/**
  * Setup routing entry to single node
  * (deprecated, please use csp_rtable_set)
  *

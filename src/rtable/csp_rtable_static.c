@@ -106,6 +106,10 @@ int csp_rtable_set(uint8_t node, uint8_t mask, csp_iface_t *ifc, uint8_t mac) {
 
 }
 
+void csp_rtable_free_resources(void) {
+
+}
+
 #ifdef CSP_DEBUG
 void csp_rtable_print(void) {
 	int i;
