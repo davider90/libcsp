@@ -21,6 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CSP_IFLIST_H_
 #define CSP_IFLIST_H_
 
+/**
+   @file
+   Interfaces.
+*/
+
 #include <csp/csp_types.h>
 
 #ifdef __cplusplus

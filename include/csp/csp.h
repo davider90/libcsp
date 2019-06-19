@@ -21,16 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_H_
 #define _CSP_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+   @file
+   CSP.
+*/
 
-/* Includes */
-#include <stdint.h>
+#include <stdarg.h>
 
-#include <csp/csp_autoconfig.h>
-
-/* CSP includes */
 #include "csp_types.h"
 #include "csp_platform.h"
 #include "csp_error.h"
@@ -39,6 +36,26 @@ extern "C" {
 #include "csp_rtable.h"
 #include "csp_iflist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+   Memory pointer.
+*/
+#ifdef __AVR__
+typedef uint32_t csp_memptr_t;
+typedef const uint32_t csp_const_memptr_t;
+#else
+typedef void * csp_memptr_t;
+typedef const void * csp_const_memptr_t;
+#endif
+
+/**
+   Platform specific memory copy function.
+*/
+typedef csp_memptr_t (*csp_memcpy_fnc_t)(csp_memptr_t, csp_const_memptr_t, size_t);
+    
 /**
  * CSP configuration.
  * @see csp_init()
@@ -80,6 +97,7 @@ static inline void csp_conf_get_defaults(csp_conf_t * conf) {
  * Initialize CSP.
  * This will configure/allocate basic structures.
  * @param[in] conf configuration. A shallow copy will be done of the configuration, i.e. only copy references to strings/structers.
+ * @return @ref CSP_ERR
  */
 int csp_init(const csp_conf_t * conf);
 
@@ -103,8 +121,8 @@ uint8_t csp_get_address(void);
 
 /**
  * Create a CSP socket endpoint.
- * @param[in] opts Socket options
- * @return Pointer to a socket on success, NULL on failure
+ * @param[in] opts Socket options.
+ * @return Socket on success, NULL on failure
  */
 csp_socket_t *csp_socket(uint32_t opts);
 
@@ -112,7 +130,7 @@ csp_socket_t *csp_socket(uint32_t opts);
  * Wait for a new connection on a socket created by csp_socket
  * @param socket Socket to accept connections on
  * @param timeout use CSP_MAX_DELAY for infinite timeout
- * @return Return pointer to csp_conn_t or NULL if timeout was reached
+ * @return New connection on success, NULL on failure or timeout.
  */
 csp_conn_t *csp_accept(csp_socket_t *socket, uint32_t timeout);
 
@@ -124,7 +142,7 @@ csp_conn_t *csp_accept(csp_socket_t *socket, uint32_t timeout);
  * Do NOT call this from ISR
  * @param conn pointer to connection
  * @param timeout timeout in ms, use CSP_MAX_DELAY for infinite blocking time
- * @return Returns pointer to csp_packet_t, which you MUST free yourself, either by calling csp_buffer_free() or reusing the buffer for a new csp_send.
+ * @return Packet or NULL in case of failure or timeout.
  */
 csp_packet_t *csp_read(csp_conn_t *conn, uint32_t timeout);
 
@@ -204,7 +222,9 @@ int csp_transaction_persistent(csp_conn_t *conn, uint32_t timeout, void *outbuf,
  * This fuction uses the socket directly to receive a frame
  * If no packet is available and a timeout has been specified the call will block.
  * Do NOT call this from ISR
- * @return Returns pointer to csp_packet_t, which you MUST free yourself, either by calling csp_buffer_free() or reusing the buffer for a new csp_send.
+ * @param socket connection-less socket.
+ * @param timeout timeout in ms, use CSP_MAX_DELAY for infinite blocking time
+ * @return Packet or NULL in case of failure or timeout.
  */
 csp_packet_t *csp_recvfrom(csp_socket_t *socket, uint32_t timeout);
 
@@ -217,7 +237,7 @@ csp_packet_t *csp_recvfrom(csp_socket_t *socket, uint32_t timeout);
  * @param opts CSP_O_x
  * @param packet pointer to packet
  * @param timeout timeout used by interfaces with blocking send
- * @return -1 if error (you must free packet), 0 if OK (you must discard pointer)
+ * @return @ref CSP_ERR. On failure, the packet must be freed.
  */
 int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint32_t opts, csp_packet_t *packet, uint32_t timeout);
 
@@ -228,11 +248,11 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
  * @param reply_packet actual reply data
  * @param opts CSP_O_x
  * @param timeout timeout used by interfaces with blocking send
- * @return -1 if error (you must free packet), 0 if OK (you must discard pointer)
+ * @return @ref CSP_ERR. On failure, the reply_packet must be freed.
  */
-int csp_sendto_reply(csp_packet_t * request_packet, csp_packet_t * reply_packet, uint32_t opts, uint32_t timeout);
+int csp_sendto_reply(const csp_packet_t * request_packet, csp_packet_t * reply_packet, uint32_t opts, uint32_t timeout);
 
-/** csp_connect
+/**
  * Used to establish outgoing connections
  * This function searches the port table for free slots and finds an unused
  * connection from the connection pool
@@ -246,7 +266,7 @@ int csp_sendto_reply(csp_packet_t * request_packet, csp_packet_t * reply_packet,
  */
 csp_conn_t *csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t timeout, uint32_t opts);
 
-/** csp_close
+/**
  * Closes a given connection and frees buffers used.
  * @param conn pointer to connection structure
  * @return CSP_ERR_NONE if connection was closed. Otherwise, an err code is returned.
@@ -302,9 +322,10 @@ int csp_bind(csp_socket_t *socket, uint8_t port);
 /**
  * Start the router task.
  * @param task_stack_size The number of portStackType to allocate. This only affects FreeRTOS systems.
- * @param priority The OS task priority of the router
+ * @param task_priority The OS task priority of the router
+ * @return @ref CSP_ERR.
  */
-int csp_route_start_task(unsigned int task_stack_size, unsigned int priority);
+int csp_route_start_task(unsigned int task_stack_size, unsigned int task_priority);
 
 /**
  * Call the router worker function manually (without the router task)
@@ -318,10 +339,10 @@ int csp_route_work(uint32_t timeout);
 /**
  * Start the bridge task.
  * @param task_stack_size The number of portStackType to allocate. This only affects FreeRTOS systems.
- * @param priority The OS task priority of the router
+ * @param task_priority The OS task priority of the router
  * @param _if_a pointer to first side
  * @param _if_b pointer to second side
- * @return CSP_ERR type
+ * @return @ref CSP_ERR
  */
 int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, csp_iface_t * _if_a, csp_iface_t * _if_b);
 
@@ -333,6 +354,7 @@ int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, c
  * support promiscuous mode.
  *
  * @param queue_size Size (max length) of queue for incoming packets
+ * @return @ref CSP_ERR
  */
 int csp_promisc_enable(unsigned int queue_size);
 
@@ -344,12 +366,13 @@ int csp_promisc_enable(unsigned int queue_size);
 void csp_promisc_disable(void);
 
 /**
- * Get packet from promiscuous mode packet queue
- * Returns the first packet from the promiscuous mode packet queue.
+ * Get packet from promiscuous packet queue
+ * Returns the first packet from the promiscuous packet queue.
  * The queue is FIFO, so the returned packet is the oldest one
  * in the queue.
  *
  * @param timeout Timeout in ms to wait for a new packet
+ * @return Packet (free with csp_buffer_free() or re-use packet), NULL on error or timeout.
  */
 csp_packet_t *csp_promisc_read(uint32_t timeout);
 
@@ -374,10 +397,10 @@ int csp_sfp_send(csp_conn_t * conn, const void * data, int totalsize, int mtu, u
  * @param totalsize size of data to send
  * @param mtu maximum transfer unit
  * @param timeout timeout in ms to wait for csp_send()
- * @param memcpyfcn, pointer to memcpy function
+ * @param memcpyfcn memcpy function.
  * @return 0 if OK, -1 if ERR
  */
-int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, void * (*memcpyfcn)(void *, const void *, size_t));
+int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn);
 
 /**
  * This is the counterpart to the csp_sfp_send function
@@ -513,13 +536,17 @@ int csp_xtea_set_key(char *key, uint32_t keylen);
 int csp_hmac_set_key(char *key, uint32_t keylen);
 
 /**
- * Print connection table
+ * Print connection table to stdout.
  */
 void csp_conn_print_table(void);
+
+/**
+ * Print connection table to string.
+ */
 int csp_conn_print_table_str(char * str_buf, int str_size);
 
 /**
- * Print buffer usage table
+ * Print buffer usage table to stdout.
  */
 void csp_buffer_print_table(void);
 
@@ -528,21 +555,19 @@ void csp_buffer_print_table(void);
  */
 void csp_hex_dump(const char *desc, void *addr, int len);
 
-#ifdef __AVR__
-typedef uint32_t csp_memptr_t;
-#else
-typedef void * csp_memptr_t;
-#endif
-
-typedef csp_memptr_t (*csp_memcpy_fnc_t)(csp_memptr_t, const csp_memptr_t, size_t);
+/**
+   Set platform specific memory copy function.
+*/
 void csp_cmp_set_memcpy(csp_memcpy_fnc_t fnc);
 
 /**
- * Set csp_debug hook function
- * @param f Hook function
+ * Debug hook function.
  */
-#include <stdarg.h>
 typedef void (*csp_debug_hook_func_t)(csp_debug_level_t level, const char *format, va_list args);
+
+/**
+ * Set debug hook function.
+ */
 void csp_debug_hook_set(csp_debug_hook_func_t f);
 
 #ifdef __cplusplus

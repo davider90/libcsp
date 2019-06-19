@@ -21,6 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef CSP_TYPES_H_
 #define CSP_TYPES_H_
 
+/**
+   @file
+   CSP types.
+*/
+
 #include <stdint.h>
 #include <csp/csp_autoconfig.h> // -> CSP_HAVE_X defines
 #ifdef CSP_HAVE_STDBOOL_H

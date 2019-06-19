@@ -21,6 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_DEBUG_H_
 #define _CSP_DEBUG_H_
 
+/**
+   @file
+   CSP debug and log.
+*/
+
 #include <inttypes.h>
 #include <string.h>
 
@@ -39,12 +44,19 @@ typedef enum {
 	CSP_LOCK	= 6,
 } csp_debug_level_t;
 
-/* Extract filename component from path */
+/**
+   Extract filename component from path
+*/
 #define BASENAME(_file) ((strrchr(_file, '/') ? : (strrchr(_file, '\\') ? : _file)) + 1)
 
-/* Implement csp_assert_fail_action to override default failure action */
+/**
+   Implement csp_assert_fail_action to override default failure action
+*/
 extern void __attribute__((weak)) csp_assert_fail_action(const char *assertion, const char *file, int line);
 
+/**
+   CSP assert.
+*/
 #ifndef NDEBUG
 	#define csp_assert(exp)										\
 	do {												\
