@@ -945,7 +945,6 @@ PyMODINIT_FUNC PyInit_libcsp_py3(void) {
         PyModule_AddIntConstant(m, "CSP_BUF_FREE", CSP_BUF_FREE);
         PyModule_AddIntConstant(m, "CSP_UPTIME", CSP_UPTIME);
         PyModule_AddIntConstant(m, "CSP_ANY", CSP_ANY);
-        PyModule_AddIntConstant(m, "CSP_PROMISC", CSP_PROMISC);
 
         /* PRIORITIES */
         PyModule_AddIntConstant(m, "CSP_PRIO_CRITICAL", CSP_PRIO_CRITICAL);

@@ -67,19 +67,21 @@ def options(ctx):
 
     # Options
     gr.add_option('--with-loglevel', metavar='LEVEL', default='debug', help='Set minimum compile time log level. Must be one of \'error\', \'warn\', \'info\' or \'debug\'')
-    gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type')
+    gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type: \'static\' or \'cidr\'')
 
 def configure(ctx):
-    # Validate OS
+    # Validate options
     if not ctx.options.with_os in ('posix', 'windows', 'freertos', 'macosx'):
         ctx.fatal('--with-os must be either \'posix\', \'windows\', \'macosx\' or \'freertos\'')
 
-    # Validate USART drivers
     if not ctx.options.with_driver_usart in (None, 'windows', 'linux'):
         ctx.fatal('--with-driver-usart must be either \'windows\' or \'linux\'')
 
     if not ctx.options.with_loglevel in ('error', 'warn', 'info', 'debug'):
         ctx.fatal('--with-loglevel must be either \'error\', \'warn\', \'info\' or \'debug\'')
+
+    if not ctx.options.with_rtable in ('static', 'cidr'):
+        ctx.fatal('--with-rtable must be either \'static\' or \'cidr\'')
 
     # Setup and validate toolchain
     if (len(ctx.stack_path) <= 1) and ctx.options.toolchain:

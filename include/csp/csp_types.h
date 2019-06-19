@@ -46,8 +46,7 @@ enum csp_reserved_ports_e {
 	CSP_REBOOT			= 4,
 	CSP_BUF_FREE		= 5,
 	CSP_UPTIME			= 6,
-	CSP_ANY				= 254,
-	CSP_PROMISC			= 255,
+	CSP_ANY				= 255,
 };
 
 typedef enum {

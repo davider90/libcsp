@@ -35,7 +35,7 @@ extern "C" {
 #define CSP_ERR_ALREADY		-7		/* Connection already in progress */
 #define CSP_ERR_RESET		-8 		/* Connection reset */
 #define CSP_ERR_NOBUFS		-9 		/* No more buffer space available */
-#define CSP_ERR_TX			-10 	/* Transmission failed */
+#define CSP_ERR_TX		-10 		/* Transmission failed */
 #define CSP_ERR_DRIVER		-11		/* Error in driver layer */
 #define CSP_ERR_AGAIN		-12		/* Resource temporarily unavailable */
 

@@ -53,10 +53,10 @@ typedef struct csp_conf_s {
 
 	uint8_t conn_max;		/**< Max number of connections. A fixed connection array is allocated by csp_init() */
 	uint8_t conn_queue_length;	/**< Max queue length (max queued Rx messages). */
-	uint8_t conn_dfl_so;		/**< Default/minimum connection options. Options will always be or'ed onto new connections, see csp_connect() */
+	uint32_t conn_dfl_so;		/**< Default/minimum connection options. Options will always be or'ed onto new connections, see csp_connect() */
 	uint8_t fifo_length;		/**< Length of incoming message queue, used for handover to router task. */
 	uint8_t port_max_bind;		/**< Max/highest port for use with csp_bind() */
-	uint8_t rdp_max_window;		/**< Max/highest port for use with csp_bind() */
+	uint8_t rdp_max_window;		/**< Max RDP window size */
 
 } csp_conf_t;
 
@@ -82,6 +82,12 @@ static inline void csp_conf_get_defaults(csp_conf_t * conf) {
  * @param[in] conf configuration. A shallow copy will be done of the configuration, i.e. only copy references to strings/structers.
  */
 int csp_init(const csp_conf_t * conf);
+
+/**
+ * Free allocated resorces in CSP (for testing).
+ * This is only to be called from automatic tests, to satisfy tools like valgrind.
+ */
+void csp_free_resources(void);
 
 /**
  * Get a \a read-only reference to the active CSP configuration.
@@ -323,12 +329,12 @@ int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, c
  * Enable promiscuous mode packet queue
  * This function is used to enable promiscuous mode for the router.
  * If enabled, a copy of all incoming packets are placed in a queue
- * that can be read with csp_promisc_get(). Not all interface drivers
+ * that can be read with csp_promisc_read(). Not all interface drivers
  * support promiscuous mode.
  *
- * @param buf_size Size of buffer for incoming packets
+ * @param queue_size Size (max length) of queue for incoming packets
  */
-int csp_promisc_enable(unsigned int buf_size);
+int csp_promisc_enable(unsigned int queue_size);
 
 /**
  * Disable promiscuous mode.

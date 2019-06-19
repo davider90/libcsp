@@ -563,6 +563,7 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	 * ACK TIMEOUT:
 	 * Check ACK timeouts, if we have unacknowledged segments
 	 */
+
 	if (conn->rdp.delayed_acks) {
 		csp_rdp_check_ack(conn);
 	}

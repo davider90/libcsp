@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <csp/csp.h>
 #include <csp/interfaces/csp_if_lo.h>
+#include <csp/csp_rtable.h>
 
 #include "csp_conn.h"
 #include "csp_qfifo.h"
@@ -69,6 +70,15 @@ int csp_init(const csp_conf_t * conf) {
 
 }
 
+void csp_free_resources(void) {
+
+	csp_port_free_resources();
+	csp_rtable_free_resources();
+
+}
+
 const csp_conf_t * csp_get_conf(void) {
+
 	return &csp_conf;
+
 }
