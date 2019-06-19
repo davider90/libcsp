@@ -56,7 +56,7 @@ def options(ctx):
     gr.add_option('--enable-if-kiss', action='store_true', help='Enable KISS/RS.232 interface')
     gr.add_option('--enable-if-can', action='store_true', help='Enable CAN interface')
     gr.add_option('--enable-if-zmqhub', action='store_true', help='Enable ZMQHUB interface')
-    
+
     # Drivers
     gr.add_option('--enable-can-socketcan', action='store_true', help='Enable Linux socketcan driver')
     gr.add_option('--with-driver-usart', default=None, metavar='DRIVER', help='Build USART driver. [windows, linux, None]')
@@ -200,6 +200,10 @@ def configure(ctx):
     ctx.define_cond('CSP_USE_QOS', ctx.options.enable_qos)
     ctx.define_cond('CSP_USE_DEDUP', ctx.options.enable_dedup)
     ctx.define_cond('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
+    ctx.define_cond('CSP_USE_CAN', ctx.options.enable_if_can)
+    ctx.define_cond('CSP_USE_I2C', ctx.options.enable_if_i2c)
+    ctx.define_cond('CSP_USE_KISS', ctx.options.enable_if_kiss)
+    ctx.define_cond('CSP_USE_ZMQHUB', ctx.options.enable_if_zmqhub)
 
     # Set logging level
     ctx.define_cond('CSP_LOG_LEVEL_DEBUG', ctx.options.with_loglevel in ('debug'))

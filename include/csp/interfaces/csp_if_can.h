@@ -57,7 +57,10 @@ extern "C" {
 				 CFP_MAKE_DST((uint32_t)(1 << CFP_HOST_SIZE) - 1) | \
 				 CFP_MAKE_ID((uint32_t)(1 << CFP_ID_SIZE) - 1))
 
-/* Maximum Transmission Unit for CSP over CAN */
+/**
+   Default Maximum Transmission Unit (MTU) for CSP over CAN.
+   Maximum value is 2042 bytes.
+*/
 #define CSP_CAN_MTU	256
 
 int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t * data, uint8_t dlc, CSP_BASE_TYPE *task_woken);

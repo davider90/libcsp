@@ -47,12 +47,6 @@ extern "C" {
  */
 void csp_qfifo_write(csp_packet_t *packet, csp_iface_t *interface, CSP_BASE_TYPE *pxTaskWoken);
 
-/**
- * Register your interface in the router core using this function.
- * This must be done in the interface init() function.
- */
-void csp_iflist_add(csp_iface_t * ifc);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

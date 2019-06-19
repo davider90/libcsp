@@ -28,6 +28,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef I2C_H_
 #define I2C_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The return value of the driver is a bit strange,
  * It should return E_NO_ERR if successfull and the value is -1
@@ -110,4 +114,7 @@ int i2c_init(int handle, int mode, uint8_t addr, uint16_t speed, int queue_len_t
 */
 int i2c_send(int handle, i2c_frame_t * frame, uint16_t timeout);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

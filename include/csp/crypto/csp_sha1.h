@@ -21,11 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_SHA1_H_
 #define _CSP_SHA1_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
 
 /* The SHA1 block and message digest size in bytes */
 #define SHA1_BLOCKSIZE	64
