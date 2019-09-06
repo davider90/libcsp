@@ -26,8 +26,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP debug and log.
 */
 
+#include <csp/csp_types.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdarg.h>
+
+#if (CSP_USE_EXTERNAL_DEBUG)
+/* Use external csp_debug API */
+#include <csp/external/csp_debug.h>
+
+#else 
 
 #ifdef __cplusplus
 extern "C" {
@@ -155,6 +163,17 @@ void csp_debug_set_level(csp_debug_level_t level, bool value);
  */
 int csp_debug_get_level(csp_debug_level_t level);
 
+/**
+ * Debug hook function.
+ */
+typedef void (*csp_debug_hook_func_t)(csp_debug_level_t level, const char *format, va_list args);
+
+/**
+ * Set debug hook function.
+ */
+void csp_debug_hook_set(csp_debug_hook_func_t f);
+    
+#endif // CSP_USE_EXTERNAL_DEBUG
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

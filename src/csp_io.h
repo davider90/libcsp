@@ -38,7 +38,7 @@ extern "C" {
  * @param timeout a timeout to wait for TX to complete. NOTE: not all underlying drivers supports flow-control.
  * @return returns 1 if successful and 0 otherwise. you MUST free the frame yourself if the transmission was not successful.
  */
-int csp_send_direct(csp_id_t idout, csp_packet_t * packet, csp_iface_t * ifout, uint32_t timeout);
+int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_route_t * ifroute, uint32_t timeout);
 
 #ifdef __cplusplus
 } /* extern "C" */

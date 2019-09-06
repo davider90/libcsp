@@ -21,11 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_SYSTEM_H_
 #define _CSP_SYSTEM_H_
 
+#include <csp/csp_platform.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
 
 #define COLOR_MASK_COLOR 	0x0F
 #define COLOR_MASK_MODIFIER	0xF0
@@ -36,15 +36,15 @@ typedef enum {
 	COLOR_BLACK		= 0x01,
 	COLOR_RED		= 0x02,
 	COLOR_GREEN		= 0x03,
-	COLOR_YELLOW	= 0x04,
+	COLOR_YELLOW		= 0x04,
 	COLOR_BLUE		= 0x05,
-	COLOR_MAGENTA	= 0x06,
+	COLOR_MAGENTA		= 0x06,
 	COLOR_CYAN		= 0x07,
 	COLOR_WHITE		= 0x08,
 	/* Modifiers */
-	COLOR_NORMAL	= 0x0F,
+	COLOR_NORMAL		= 0x0F,
 	COLOR_BOLD		= 0x10,
-	COLOR_UNDERLINE	= 0x20,
+	COLOR_UNDERLINE		= 0x20,
 	COLOR_BLINK		= 0x30,
 	COLOR_HIDE		= 0x40,
 } csp_color_t;
