@@ -46,8 +46,9 @@ static int kiss_lock_init = 0;
 static csp_bin_sem_handle_t kiss_lock;
 
 /* Send a CSP packet over the KISS RS232 protocol */
-static int csp_kiss_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout) {
+static int csp_kiss_tx(const csp_rtable_route_t * ifroute, csp_packet_t * packet, uint32_t timeout) {
 
+	csp_iface_t * interface = ifroute->interface;
 	if (interface == NULL || interface->driver == NULL)
 		return CSP_ERR_DRIVER;
 

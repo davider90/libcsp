@@ -1,3 +1,16 @@
+libcsp 1.6, DD-MM-YYYY
+----------------------
+- Feature release
+- api: Refactored basic configuration and initialization (more dynamic allocation vs. static arrays/defines).
+- api: Refactored/aligned csp_rtable cidr and static APIs. Use same format for load and save.
+- api: csp_rtable_set(static) no longer calls csp_iflist_add().
+- improvement: Updated API documentation for doxygen.
+
+libcsp 1.5, DD-MM-YYYY
+----------------------
+- Internal release
+
+
 libcsp 1.4, 07-05-2015
 ----------------------
 - new: General rtable interface with support for STATIC or CIDR format

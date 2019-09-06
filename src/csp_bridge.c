@@ -53,22 +53,19 @@ static CSP_DEFINE_TASK(csp_bridge) {
 #endif
 
 		/* Find the opposing interface */
-		csp_iface_t * ifout;
+		csp_rtable_route_t route;
 		if (input.interface == if_a) {
-			ifout = if_b;
+			route.interface = if_b;
 		} else {
-			ifout = if_a;
+			route.interface = if_a;
 		}
+		route.mac = CSP_NODE_MAC;
 
 		/* Send to the interface directly, no hassle */
-		if (csp_send_direct(packet->id, packet, ifout, 0) != CSP_ERR_NONE) {
+		if (csp_send_direct(packet->id, packet, &route, 0) != CSP_ERR_NONE) {
 			csp_log_warn("Router failed to send");
 			csp_buffer_free(packet);
 		}
-
-		/* Next message, please */
-		continue;
-
 	}
 
 	return CSP_TASK_RETURN;
