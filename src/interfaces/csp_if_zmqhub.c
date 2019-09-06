@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_semaphore.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
-#include <errno.h>
 
 /* ZMQ */
 #include <zmq.h>
@@ -51,13 +50,11 @@ typedef struct {
  * @param timeout Timeout in ms
  * @return 1 if packet was successfully transmitted, 0 on error
  */
-int csp_zmqhub_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout) {
+int csp_zmqhub_tx(const csp_rtable_route_t * route, csp_packet_t * packet, uint32_t timeout) {
 
-	zmq_driver_t * drv = interface->driver;
+	zmq_driver_t * drv = route->interface->driver;
 
-	uint8_t dest = csp_rtable_find_mac(packet->id.dst);
-	if (dest == CSP_NODE_MAC)
-		dest = packet->id.dst;
+	const uint8_t dest = (route->mac != CSP_NODE_MAC) ? route->mac : packet->id.dst;
 
 	uint16_t length = packet->length;
 	uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(dest);

@@ -78,7 +78,7 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 #endif
 
 	/* Bind incoming frame to a packet buffer */
-	buf = csp_can_pbuf_find(id, CFP_ID_CONN_MASK);
+	buf = csp_can_pbuf_find(id, CFP_ID_CONN_MASK, task_woken);
 
 	/* Check returned buffer */
 	if (buf == NULL) {
@@ -198,8 +198,9 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 	return CSP_ERR_NONE;
 }
 
-int csp_can_tx(csp_iface_t *interface, csp_packet_t *packet, uint32_t timeout)
+int csp_can_tx(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_t timeout)
 {
+    csp_iface_t * interface = ifroute->interface;
 
 	/* CFP Identification number */
 	static volatile int csp_can_frame_id = 0;
@@ -215,9 +216,7 @@ int csp_can_tx(csp_iface_t *interface, csp_packet_t *packet, uint32_t timeout)
 	overhead = sizeof(csp_id_t) + sizeof(uint16_t);
 
 	/* Insert destination node mac address into the CFP destination field */
-	dest = csp_rtable_find_mac(packet->id.dst);
-	if (dest == CSP_NODE_MAC)
-		dest = packet->id.dst;
+	dest = (ifroute->mac != CSP_NODE_MAC) ? ifroute->mac : packet->id.dst;
 
 	/* Create CAN identifier */
 	uint32_t id = 0;

@@ -30,17 +30,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 static int csp_i2c_handle = 0;
 
-int csp_i2c_tx(csp_iface_t * interface, csp_packet_t * packet, uint32_t timeout) {
+int csp_i2c_tx(const csp_rtable_route_t * ifroute, csp_packet_t * packet, uint32_t timeout) {
 
 	/* Cast the CSP packet buffer into an i2c frame */
 	i2c_frame_t * frame = (i2c_frame_t *) packet;
 
 	/* Insert destination node into the i2c destination field */
-	if (csp_rtable_find_mac(packet->id.dst) == CSP_NODE_MAC) {
-		frame->dest = packet->id.dst;
-	} else {
-		frame->dest = csp_rtable_find_mac(packet->id.dst);
-	}
+	frame->dest = (ifroute->mac != CSP_NODE_MAC) ? ifroute->mac : packet->id.dst;
 
 	/* Save the outgoing id in the buffer */
 	packet->id.ext = csp_hton32(packet->id.ext);
