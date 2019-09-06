@@ -18,9 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <csp/csp.h>
+#include <csp/csp_sfp.h>
+
+#include <string.h>
+#include <csp/csp_buffer.h>
+#include <csp/csp_debug.h>
 #include <csp/csp_endian.h>
 #include <csp/arch/csp_malloc.h>
 #include "csp_conn.h"
@@ -64,10 +66,10 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize,
 			size = mtu;
 
 		/* Print debug */
-		csp_debug(CSP_PROTOCOL, "Sending SFP at %x size %u", data + count, size);
+		csp_log_protocol("Sending SFP at %p size %u", data + count, size);
 
 		/* Copy data */
-		(memcpyfcn)(packet->data, data + count, size);
+		(memcpyfcn)((csp_memptr_t)(uintptr_t)packet->data, (csp_memptr_t)(uintptr_t)(data + count), size);
 		packet->length = size;
 
 		/* Set fragment flag */
@@ -117,7 +119,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
 
 		/* Check that SFP header is present */
 		if ((packet->id.flags & CSP_FFRAG) == 0) {
-			csp_debug(CSP_ERROR, "Missing SFP header");
+			csp_log_error("Missing SFP header");
 			csp_buffer_free(packet);
 			return -1;
 		}
@@ -127,10 +129,10 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
 		sfp_header->offset = csp_ntoh32(sfp_header->offset);
 		sfp_header->totalsize = csp_ntoh32(sfp_header->totalsize);
 
-		csp_debug(CSP_PROTOCOL, "SFP fragment %u/%u", sfp_header->offset + packet->length, sfp_header->totalsize);
+		csp_log_protocol("SFP fragment %"PRIu32"/%"PRIu32, sfp_header->offset + packet->length, sfp_header->totalsize);
 
 		if (sfp_header->offset > last_byte + 1) {
-			csp_debug(CSP_ERROR, "SFP missing %u bytes", sfp_header->offset - last_byte);
+			csp_log_error("SFP missing %"PRIu32" bytes", sfp_header->offset - last_byte);
 			csp_buffer_free(packet);
 			return -1;
 		} else {
@@ -141,7 +143,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
 		if (*dataout == NULL)
 			*dataout = csp_malloc(sfp_header->totalsize);
 		if (*dataout == NULL) {
-			csp_debug(CSP_ERROR, "No dyn-memory for SFP fragment");
+			csp_log_error("No dyn-memory for SFP fragment");
 			csp_buffer_free(packet);
 			return -1;
 		}
@@ -151,7 +153,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
 		memcpy(*dataout + sfp_header->offset, packet->data, packet->length);
 
 		if (sfp_header->offset + packet->length >= sfp_header->totalsize) {
-			csp_debug(CSP_PROTOCOL, "SFP complete");
+			csp_log_protocol("SFP complete");
 			csp_buffer_free(packet);
 			return 0;
 		} else {
