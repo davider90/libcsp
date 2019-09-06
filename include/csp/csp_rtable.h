@@ -23,7 +23,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
    @file
+
    Routing table.
+
+   The routing table maps a CSP address to an interface.
+
+   Normal routing: If the route's MAC address is set to #CSP_NODE_MAC, the message will be sent to the destination address specified in the
+   CSP header, otherwise the message will be sent to route's MAC address.
 */
 
 #include <csp/csp_iflist.h>
@@ -32,127 +38,129 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
+/**
+   Node MAC address (i.e. not set) -> use CSP header destination.
+*/
 #define CSP_NODE_MAC				0xFF
-#define CSP_ROUTE_COUNT				(CSP_ID_HOST_MAX + 2)
-#define CSP_ROUTE_TABLE_SIZE		5 * CSP_ROUTE_COUNT
 
 /**
- * Find outgoing interface in routing table
- * @param id Destination node
- * @return pointer to outgoing interface or NULL
- */
-csp_iface_t * csp_rtable_find_iface(uint8_t id);
+   Route entry.
+   @see csp_rtable_find_route().
+*/
+struct csp_rtable_route_s {
+    /** Which interface to route packet on */
+    csp_iface_t * interface;
+    /** If difference than #CSP_NODE_MAC, route packet to this address, instead of address in CSP header. */
+    uint8_t mac;
+};
 
 /**
- * Find MAC address associated with node
- * @param id Destination node
- * @return MAC address
- */
-uint8_t csp_rtable_find_mac(uint8_t id);
+   Find route to node.
+   @param[in] node destination node
+   @return Route or NULL if no route found.
+*/
+const csp_rtable_route_t * csp_rtable_find_route(uint8_t node);
 
 /**
- * Setup routing entry
- * @param node Host
- * @param mask Number of bits in netmask
- * @param ifc Interface
- * @param mac MAC address
- * @return CSP error type
- */
+   Find outgoing interface for node.
+   @param[in] node destination node
+   @return Interface or NULL if not found.
+*/
+csp_iface_t * csp_rtable_find_iface(uint8_t node);
+
+/**
+   Find MAC address associated for node.
+   @param[in] node destination node
+   @return MAC address or #CSP_NODE_MAC if not found.
+*/
+uint8_t csp_rtable_find_mac(uint8_t node);
+
+/**
+   Set routing entry.
+   @param[in] node destination node.
+   @param[in] mask number of bits in netmask
+   @param[in] ifc interface.
+   @param[in] mac assosicated MAC address.
+   @return @ref CSP_ERR.
+*/
 int csp_rtable_set(uint8_t node, uint8_t mask, csp_iface_t *ifc, uint8_t mac);
 
 /**
- * Print routing table to stdout
- */
-void csp_rtable_print(void);
-
-
-/**
- * Load the routing table from a buffer
- * (deprecated, please use new csp_rtable_load)
- *
- * Warning:
- * The table will be RAW from memory and contains direct pointers, not interface names.
- * Therefore it's very important that a saved routing table is deleted after a firmware update
- *
- * @param route_table_in pointer to routing table buffer
- */
-void csp_route_table_load(uint8_t route_table_in[CSP_ROUTE_TABLE_SIZE]);
+   Save routing table as a string (readable format).
+   @see csp_rtable_load() additional information.
+   @param[out] buffer user supplied buffer.
+   @param[in] buffer_size size of \a buffer.
+   @return length of saved string  TODO error ?
+*/
+int csp_rtable_save(char * buffer, int buffer_size); // TODO size_t ??
 
 /**
- * Save the routing table to a buffer
- * (deprecated, please use new csp_rtable_save)
- *
- * Warning:
- * The table will be RAW from memory and contains direct pointers, not interface names.
- * Therefore it's very important that a saved routing table is deleted after a firmware update
- *
- * @param route_table_out pointer to routing table buffer
- */
-void csp_route_table_save(uint8_t route_table_out[CSP_ROUTE_TABLE_SIZE]);
+   Load routing table from a string.
+   Table will be loaded on-top of existing routes, possibly overwriting existing entries.
+   Format: \<address\>/\<mask\> \<interface\> [mac][, next entry]
+   Example: "0/0 I2C 8, 8/2 KISS"
+   @see csp_rtable_clear(), csp_rtable_free()
+   @param[in] rtable routing table (nul terminated)
+   @return @ref CSP_ERR or number of entries.
+*/
+int csp_rtable_load(const char * rtable);
 
 /**
- * Save routing table as a string to a buffer, which can be parsed
- * again by csp_rtable_load.
- * @param buffer pointer to buffer
- * @param maxlen length of buffer
- * @return length of saved string
- */
-int csp_rtable_save(char * buffer, int maxlen);
+   Check string for valid routing elements.
+   @param[in] rtable routing table (nul terminated)
+   @return @ref CSP_ERR or number of entries.
+*/
+int csp_rtable_check(const char * rtable);
 
 /**
- * Load routing table from a string in the format
- * %u/%u %s %u
- * - Address
- * - Netmask
- * - Ifname
- * - Mac Address (this field is optional)
- * An example routing string is "0/0 I2C, 8/2 KISS"
- * The string must be \0 null terminated
- * @param buffer Pointer to string
- */
-void csp_rtable_load(const char * buffer);
-
-/**
- * Check string for valid routing table
- * @param buffer Pointer to string
- * @return number of valid entries found
- */
-int csp_rtable_check(const char * buffer);
-
-/**
- * Clear routing table:
- * This could be done before load to ensure an entire clean table is loaded.
- */
+   Clear routing table and add loopback route.
+   @see csp_rtable_free()
+*/
 void csp_rtable_clear(void);
 
 /**
- * Free allocated resorces (for testing).
- * This is only to be called from automatic tests, to satisfy tools like valgrind.
- */
-void csp_rtable_free_resources(void);
+   Clear/free all entries in the routing table.
+*/
+void csp_rtable_free(void);
 
 /**
- * Setup routing entry to single node
- * (deprecated, please use csp_rtable_set)
- *
- * @param node Host
- * @param ifc Interface
- * @param mac MAC address
- * @return CSP error type
- */
-#define csp_route_set(node, ifc, mac) csp_rtable_set(node, CSP_ID_HOST_SIZE, ifc, mac)
+   Print routing table
+*/
+void csp_rtable_print(void);
+
+typedef bool (*csp_rtable_iterator_t)(void * ctx, uint8_t address, uint8_t mask, const csp_rtable_route_t * route);
+/**
+   Iterate routing table.
+*/
+void csp_rtable_iterate(csp_rtable_iterator_t iter, void * ctx);
+    
+/**
+   Set routing entry.
+   @deprecated Use csp_rtable_set() instead.
+   @param[in] node Host
+   @param[in] ifc Interface
+   @param[in] mac MAC address
+   @return CSP error type
+*/
+static inline int csp_route_set(uint8_t node, csp_iface_t *ifc, uint8_t mac) {
+    return csp_rtable_set(node, CSP_ID_HOST_SIZE, ifc, mac);
+}
 
 /**
- * Print routing table
- * (deprecated, please use csp_rtable_print)
- */
-#define csp_route_print_table() csp_rtable_print();
+   Print routing table.
+   @deprecated Use csp_rtable_print() instead.
+*/
+static inline void csp_route_print_table() {
+    csp_rtable_print();
+}
 
 /**
- * Print list of interfaces
- * (deprecated, please use csp_iflist_print)
- */
-#define csp_route_print_interfaces() csp_iflist_print();
+   Print list of interfaces.
+   @deprecated Use csp_iflist_print() instead.
+*/
+static inline void csp_route_print_interfaces(void) {
+    csp_iflist_print();
+}
 
 #ifdef __cplusplus
 }

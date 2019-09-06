@@ -21,13 +21,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_SEMAPHORE_H_
 #define _CSP_SEMAPHORE_H_
 
+#include <csp/csp_platform.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdint.h>
-
-#include <csp/csp.h>
 
 /* POSIX interface */
 #if defined(CSP_POSIX)
@@ -36,7 +34,7 @@ extern "C" {
 #include <semaphore.h>
 
 #define CSP_SEMAPHORE_OK 	1
-#define CSP_SEMAPHORE_ERROR 2
+#define CSP_SEMAPHORE_ERROR	2
 #define CSP_MUTEX_OK 		CSP_SEMAPHORE_OK
 #define CSP_MUTEX_ERROR		CSP_SEMAPHORE_ERROR
 
@@ -67,7 +65,7 @@ typedef pthread_queue_t * csp_mutex_t;
 #undef interface
 
 #define CSP_SEMAPHORE_OK 	1
-#define CSP_SEMAPHORE_ERROR 2
+#define CSP_SEMAPHORE_ERROR	2
 #define CSP_MUTEX_OK 		CSP_SEMAPHORE_OK
 #define CSP_MUTEX_ERROR		CSP_SEMAPHORE_ERROR
 

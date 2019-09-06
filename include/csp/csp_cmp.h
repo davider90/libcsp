@@ -158,14 +158,14 @@ struct csp_cmp_message {
 } __attribute__ ((packed));
 
 /**
-   Macro for calculating size of management message.
+   Macro for calculating total size of management message.
 */
-#define CMP_SIZE(_memb) (sizeof(((struct csp_cmp_message *)0)->_memb) + sizeof(uint8_t) + sizeof(uint8_t))
+#define CMP_SIZE(_memb) (sizeof(((struct csp_cmp_message *)0)->type) + sizeof(((struct csp_cmp_message *)0)->code) + sizeof(((struct csp_cmp_message *)0)->_memb))
 
 /**
    Generic send management message request.
 */
-int csp_cmp(uint8_t node, uint32_t timeout, uint8_t code, int membsize, struct csp_cmp_message *msg);
+int csp_cmp(uint8_t node, uint32_t timeout, uint8_t code, int msg_size, struct csp_cmp_message *msg);
 
 /**
    Macro for defining management handling function.
@@ -178,10 +178,16 @@ static inline int csp_cmp_##_memb(uint8_t node, uint32_t timeout, struct csp_cmp
 CMP_MESSAGE(CSP_CMP_IDENT, ident)
 CMP_MESSAGE(CSP_CMP_ROUTE_SET, route_set)
 CMP_MESSAGE(CSP_CMP_IF_STATS, if_stats)
-CMP_MESSAGE(CSP_CMP_PEEK, peek)
-CMP_MESSAGE(CSP_CMP_POKE, poke)
 CMP_MESSAGE(CSP_CMP_CLOCK, clock)
 
+static inline int csp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
+    return csp_cmp(node, timeout, CSP_CMP_PEEK, CMP_SIZE(peek) - sizeof(msg->peek.data) + msg->peek.len, msg);
+}
+
+static inline int csp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
+    return csp_cmp(node, timeout, CSP_CMP_POKE, CMP_SIZE(poke) - sizeof(msg->poke.data) + msg->poke.len, msg);
+}
+    
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

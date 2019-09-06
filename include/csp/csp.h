@@ -26,35 +26,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP.
 */
 
-#include <stdarg.h>
-
-#include "csp_types.h"
 #include "csp_platform.h"
 #include "csp_error.h"
 #include "csp_debug.h"
 #include "csp_buffer.h"
 #include "csp_rtable.h"
 #include "csp_iflist.h"
+#include "csp_sfp.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/**
-   Memory pointer.
-*/
-#ifdef __AVR__
-typedef uint32_t csp_memptr_t;
-typedef const uint32_t csp_const_memptr_t;
-#else
-typedef void * csp_memptr_t;
-typedef const void * csp_const_memptr_t;
-#endif
-
-/**
-   Platform specific memory copy function.
-*/
-typedef csp_memptr_t (*csp_memcpy_fnc_t)(csp_memptr_t, csp_const_memptr_t, size_t);
     
 /**
  * CSP configuration.
@@ -377,53 +359,6 @@ void csp_promisc_disable(void);
 csp_packet_t *csp_promisc_read(uint32_t timeout);
 
 /**
- * Send multiple packets using the simple fragmentation protocol
- * CSP will add total size and offset to all packets
- * This can be read by the client using the csp_sfp_recv, if the CSP_FFRAG flag is set
- * @param conn pointer to connection
- * @param data pointer to data to send
- * @param totalsize size of data to send
- * @param mtu maximum transfer unit
- * @param timeout timeout in ms to wait for csp_send()
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_send(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout);
-
-/**
- * Same as csp_sfp_send but with option to supply your own memcpy function.
- * This is usefull if you wish to send data stored in flash memory or another location
- * @param conn pointer to connection
- * @param data pointer to data to send
- * @param totalsize size of data to send
- * @param mtu maximum transfer unit
- * @param timeout timeout in ms to wait for csp_send()
- * @param memcpyfcn memcpy function.
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn);
-
-/**
- * This is the counterpart to the csp_sfp_send function
- * @param conn pointer to active conn, on which you expect to receive sfp packed data
- * @param dataout pointer to NULL pointer, whill be overwritten with malloc pointer
- * @param datasize actual size of received data
- * @param timeout timeout in ms to wait for csp_recv()
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_recv(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout);
-
-/**
- * This is the counterpart to the csp_sfp_send function
- * @param conn pointer to active conn, on which you expect to receive sfp packed data
- * @param dataout pointer to NULL pointer, whill be overwritten with malloc pointer
- * @param datasize actual size of received data
- * @param timeout timeout in ms to wait for csp_recv()
- * @param first_packet This is a pointer to the first SFP packet (previously received with csp_read)
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout, csp_packet_t * first_packet);
-
-/**
  * If the given packet is a service-request (that is uses one of the csp service ports)
  * it will be handled according to the CSP service handler.
  * This function will either use the packet buffer or delete it,
@@ -464,11 +399,29 @@ void csp_ps(uint8_t node, uint32_t timeout);
  * Request amount of free memory
  * @param node node id
  * @param timeout timeout in ms
+ * @param[out] size free memory.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
+ */
+int csp_get_memfree(uint8_t node, uint32_t timeout, uint32_t * size);
+
+/**
+ * Request amount of free memory
+ * @param node node id
+ * @param timeout timeout in ms
  */
 void csp_memfree(uint8_t node, uint32_t timeout);
 
 /**
- * Request number of free buffer elements
+ * Request number of free buffers on node.
+ * @param[in] node node id
+ * @param[in] timeout timeout in ms
+ * @param[out] size free buffers.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
+ */
+int csp_get_buf_free(uint8_t node, uint32_t timeout, uint32_t * size);
+
+/**
+ * Request number of free buffers on node and print to stdout.
  * @param node node id
  * @param timeout timeout in ms
  */
@@ -492,6 +445,15 @@ void csp_shutdown(uint8_t node);
  * @param timeout timeout in ms
  */
 void csp_uptime(uint8_t node, uint32_t timeout);
+
+/**
+ * Request subsystem uptime
+ * @param[in] node node id
+ * @param[in] timeout timeout in ms
+ * @param[out] uptime uptime in seconds.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
+ */
+int csp_get_uptime(uint8_t node, uint32_t timeout, uint32_t * uptime);
 
 /**
  * Set RDP options
@@ -559,16 +521,6 @@ void csp_hex_dump(const char *desc, void *addr, int len);
    Set platform specific memory copy function.
 */
 void csp_cmp_set_memcpy(csp_memcpy_fnc_t fnc);
-
-/**
- * Debug hook function.
- */
-typedef void (*csp_debug_hook_func_t)(csp_debug_level_t level, const char *format, va_list args);
-
-/**
- * Set debug hook function.
- */
-void csp_debug_hook_set(csp_debug_hook_func_t f);
 
 #ifdef __cplusplus
 } /* extern "C" */
