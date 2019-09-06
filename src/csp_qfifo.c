@@ -92,7 +92,9 @@ void csp_qfifo_write(csp_packet_t * packet, csp_iface_t * interface, CSP_BASE_TY
 			csp_log_warn("csp_new packet called with NULL packet");
 		}
 		return;
-	} else if (interface == NULL) {
+	}
+
+	if (interface == NULL) {
 		if (pxTaskWoken == NULL) { // Only do logging in non-ISR context
 			csp_log_warn("csp_new packet called with NULL interface");
 		}
@@ -143,8 +145,6 @@ void csp_qfifo_write(csp_packet_t * packet, csp_iface_t * interface, CSP_BASE_TY
 }
 
 void csp_qfifo_wake_up(void) {
-	csp_qfifo_t queue_element;
-	queue_element.interface = NULL;
-	queue_element.packet = NULL;
+	const csp_qfifo_t queue_element = {.interface = NULL, .packet = NULL};
 	csp_queue_enqueue(qfifo[0], &queue_element, 0);
 }

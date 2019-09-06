@@ -18,12 +18,14 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <csp/csp_buffer.h>
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
 /* CSP includes */
-#include <csp/csp.h>
+#include <csp/csp_debug.h>
 #include <csp/csp_error.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_malloc.h>
@@ -120,7 +122,7 @@ void *csp_buffer_get(size_t buf_size) {
 	csp_skbf_t * buffer = NULL;
 
 	if (buf_size + CSP_BUFFER_PACKET_OVERHEAD > size) {
-		csp_log_error("Attempt to allocate too large block %u", buf_size);
+		csp_log_error("Attempt to allocate too large block %u", (unsigned int) buf_size);
 		return NULL;
 	}
 
@@ -142,33 +144,39 @@ void *csp_buffer_get(size_t buf_size) {
 }
 
 void csp_buffer_free_isr(void *packet) {
-	CSP_BASE_TYPE task_woken = 0;
-	if (!packet)
+
+	if (packet == NULL) {
+		/* freeing a NULL pointer is OK, e.g. standard free() */
 		return;
+	}
 
 	csp_skbf_t * buf = packet - sizeof(csp_skbf_t);
 
-	if (((uintptr_t) buf % CSP_BUFFER_ALIGN) > 0)
+	if (((uintptr_t) buf % CSP_BUFFER_ALIGN) > 0) {
 		return;
+	}
 
-	if (buf->skbf_addr != buf)
+	if (buf->skbf_addr != buf) {
 		return;
+	}
 
 	if (buf->refcount == 0) {
 		return;
-	} else if (buf->refcount > 1) {
-		buf->refcount--;
-		return;
-	} else {
-		buf->refcount = 0;
-		csp_queue_enqueue_isr(csp_buffers, &buf, &task_woken);
 	}
+
+	if (--buf->refcount > 0) {
+		return;
+	}
+
+	CSP_BASE_TYPE task_woken = 0;
+	csp_queue_enqueue_isr(csp_buffers, &buf, &task_woken);
 
 }
 
 void csp_buffer_free(void *packet) {
-	if (!packet) {
-		csp_log_error("Attempt to free null pointer");
+
+	if (packet == NULL) {
+		/* freeing a NULL pointer is OK, e.g. standard free() */
 		return;
 	}
 
@@ -187,29 +195,29 @@ void csp_buffer_free(void *packet) {
 	if (buf->refcount == 0) {
 		csp_log_error("FREE: Buffer already free %p", buf);
 		return;
-	} else if (buf->refcount > 1) {
-		buf->refcount--;
+	}
+
+	if (--buf->refcount > 0) {
 		csp_log_error("FREE: Buffer %p in use by %u users", buf, buf->refcount);
 		return;
-	} else {
-		buf->refcount = 0;
-		csp_log_buffer("FREE: %p", buf);
-		csp_queue_enqueue(csp_buffers, &buf, 0);
 	}
+
+	csp_log_buffer("FREE: %p", buf);
+	csp_queue_enqueue(csp_buffers, &buf, 0);
 
 }
 
 void *csp_buffer_clone(void *buffer) {
 
 	csp_packet_t *packet = (csp_packet_t *) buffer;
-
-	if (!packet)
+	if (!packet) {
 		return NULL;
+	}
 
 	csp_packet_t *clone = csp_buffer_get(packet->length);
-
-	if (clone)
+	if (clone) {
 		memcpy(clone, packet, size);
+	}
 
 	return clone;
 

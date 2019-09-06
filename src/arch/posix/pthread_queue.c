@@ -23,16 +23,14 @@ Inspired by c-pthread-queue by Matthew Dickinson
 http://code.google.com/p/c-pthread-queue/
 */
 
+#include <csp/arch/posix/pthread_queue.h>
+
 #include <pthread.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <stdint.h>
 #include <sys/time.h>
-
-/* CSP includes */
-#include <csp/arch/posix/pthread_queue.h>
 
 static inline int get_deadline(struct timespec *ts, uint32_t timeout_ms)
 {
@@ -135,7 +133,7 @@ static inline int wait_slot_available(pthread_queue_t * queue, struct timespec *
 
 }
 
-int pthread_queue_enqueue(pthread_queue_t * queue, void * value, uint32_t timeout) {
+int pthread_queue_enqueue(pthread_queue_t * queue, const void * value, uint32_t timeout) {
 
 	int ret;
 	struct timespec ts;

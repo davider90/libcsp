@@ -190,8 +190,7 @@ static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags,
 	idout.pri = conn->idout.pri < CSP_PRIO_HIGH ? conn->idout.pri : CSP_PRIO_HIGH;
 
 	/* Send packet to IF */
-	csp_iface_t * ifout = csp_rtable_find_iface(idout.dst);
-	if (csp_send_direct(idout, packet, ifout, 0) != CSP_ERR_NONE) {
+	if (csp_send_direct(idout, packet, csp_rtable_find_route(idout.dst), 0) != CSP_ERR_NONE) {
 		csp_log_error("INTERFACE ERROR: not possible to send");
 		csp_buffer_free(packet);
 		return CSP_ERR_BUSY;
@@ -370,7 +369,7 @@ static void csp_rdp_flush_eack(csp_conn_t * conn, csp_packet_t * eack_packet) {
 		}
 
 		rdp_header_t * header = csp_rdp_header_ref((csp_packet_t *) packet);
-		csp_log_protocol("EACK compare element, time %u, seq %u", packet->timestamp, csp_ntoh16(header->seq_nr));
+		csp_log_protocol("EACK compare element, time %"PRIu32", seq %"PRIu16, packet->timestamp, csp_ntoh16(header->seq_nr));
 
 		/* Look for this element in EACKs */
 		int match = 0;
@@ -433,7 +432,7 @@ void csp_rdp_flush_all(csp_conn_t * conn) {
 	/* Empty TX queue */
 	while (csp_queue_dequeue_isr(conn->rdp.tx_queue, &packet, &pdTrue) == CSP_QUEUE_OK) {
 		if (packet != NULL) {
-			csp_log_protocol("RDP %p: Flush TX Element, time %u, seq %u", conn, packet->timestamp, csp_ntoh16(csp_rdp_header_ref((csp_packet_t *) packet)->seq_nr));
+			csp_log_protocol("RDP %p: Flush TX Element, time %"PRIu32", seq %u", conn, packet->timestamp, csp_ntoh16(csp_rdp_header_ref((csp_packet_t *) packet)->seq_nr));
 			csp_buffer_free(packet);
 		}
 	}
@@ -441,7 +440,7 @@ void csp_rdp_flush_all(csp_conn_t * conn) {
 	/* Empty RX queue */
 	while (csp_queue_dequeue_isr(conn->rdp.rx_queue, &packet, &pdTrue) == CSP_QUEUE_OK) {
 		if (packet != NULL) {
-			csp_log_protocol("RDP %p: Flush RX Element, time %u, seq %u", conn, packet->timestamp, csp_ntoh16(csp_rdp_header_ref((csp_packet_t *) packet)->seq_nr));
+			csp_log_protocol("RDP %p: Flush RX Element, time %"PRIu32", seq %u", conn, packet->timestamp, csp_ntoh16(csp_rdp_header_ref((csp_packet_t *) packet)->seq_nr));
 			csp_buffer_free(packet);
 		}
 	}
@@ -494,7 +493,7 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	uint32_t time_now = csp_get_ms();
 	if (conn->socket != NULL) {
 		if (csp_rdp_time_after(time_now, conn->timestamp + conn->rdp.conn_timeout)) {
-			csp_log_warn("RDP %p: Found a lost connection (now: %u, ts: %u, to: %u), closing now",
+			csp_log_warn("RDP %p: Found a lost connection (now: %"PRIu32", ts: %"PRIu32", to: %"PRIu32"), closing now",
                                      conn, time_now, conn->timestamp, conn->rdp.conn_timeout);
 			csp_close(conn);
 			return;
@@ -531,7 +530,7 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 
 		/* If acked, do not retransmit */
 		if (csp_rdp_seq_before(csp_ntoh16(header->seq_nr), conn->rdp.snd_una)) {
-			csp_log_protocol("TX Element Free, time %u, seq %u, una %u", packet->timestamp, csp_ntoh16(header->seq_nr), conn->rdp.snd_una);
+			csp_log_protocol("TX Element Free, time %"PRIu32", seq %u, una %u", packet->timestamp, csp_ntoh16(header->seq_nr), conn->rdp.snd_una);
 			csp_buffer_free(packet);
 			continue;
 		}
@@ -546,8 +545,7 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 			/* Send copy to tx_queue */
 			packet->timestamp = csp_get_ms();
 			csp_packet_t * new_packet = csp_buffer_clone(packet);
-			csp_iface_t * ifout = csp_rtable_find_iface(conn->idout.dst);
-			if (csp_send_direct(conn->idout, new_packet, ifout, 0) != CSP_ERR_NONE) {
+			if (csp_send_direct(conn->idout, new_packet, csp_rtable_find_route(conn->idout.dst), 0) != CSP_ERR_NONE) {
 				csp_log_warn("Retransmission failed");
 				csp_buffer_free(new_packet);
 			}
@@ -586,7 +584,7 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 			"rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
 			conn, conn->rdp.state, rx_header->syn, rx_header->ack, rx_header->eak,
 			rx_header->rst, rx_header->seq_nr, rx_header->ack_nr,
-			packet->length, packet->length - sizeof(rdp_header_t));
+			packet->length, (unsigned int)(packet->length - sizeof(rdp_header_t)));
 
 	/* If a RESET was received. */
 	if (rx_header->rst) {
@@ -649,9 +647,9 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		conn->rdp.delayed_acks 		= csp_ntoh32(packet->data32[3]);
 		conn->rdp.ack_timeout 		= csp_ntoh32(packet->data32[4]);
 		conn->rdp.ack_delay_count 	= csp_ntoh32(packet->data32[5]);
-		csp_log_protocol("RDP: Window Size %u, conn timeout %u, packet timeout %u",
+		csp_log_protocol("RDP: Window Size %"PRIu32", conn timeout %"PRIu32", packet timeout %"PRIu32,
 				conn->rdp.window_size, conn->rdp.conn_timeout, conn->rdp.packet_timeout);
-		csp_log_protocol("RDP: Delayed acks: %u, ack timeout %u, ack each %u packet",
+		csp_log_protocol("RDP: Delayed acks: %"PRIu32", ack timeout %"PRIu32", ack each %"PRIu32" packet",
 				conn->rdp.delayed_acks, conn->rdp.ack_timeout, conn->rdp.ack_delay_count);
 
 		/* Connection accepted */
@@ -736,7 +734,7 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 		/* Check sequence number */
 		if (!csp_rdp_seq_between(rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + conn->rdp.window_size * 2)) {
-			csp_log_protocol("Invalid sequence number! %"PRIu16" not between %"PRIu16" and %"PRIu16,
+			csp_log_protocol("Invalid sequence number! %"PRIu16" not between %"PRIu16" and %"PRIu32,
 					rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + 1 + conn->rdp.window_size * 2);
 			/* If duplicate SYN received, send another SYN/ACK */
 			if (conn->rdp.state == RDP_SYN_RCVD)
@@ -750,7 +748,7 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 		/* Check ACK number */
 		if (!csp_rdp_seq_between(rx_header->ack_nr, conn->rdp.snd_una - 1 - (conn->rdp.window_size * 2), conn->rdp.snd_nxt - 1)) {
-			csp_log_error("Invalid ACK number! %u not between %u and %u",
+			csp_log_error("Invalid ACK number! %u not between %"PRIu32" and %u",
 					rx_header->ack_nr, conn->rdp.snd_una - 1 - (conn->rdp.window_size * 2), conn->rdp.snd_nxt - 1);
 			goto discard_open;
 		}
@@ -840,7 +838,7 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 		/* Check ACK number */
 		if (!csp_rdp_seq_between(rx_header->ack_nr, conn->rdp.snd_una - 1 - (conn->rdp.window_size * 2), conn->rdp.snd_nxt - 1)) {
-			csp_log_error("Invalid ACK number! %u not between %u and %u",
+			csp_log_error("Invalid ACK number! %u not between %"PRIu32" and %u",
 					rx_header->ack_nr, conn->rdp.snd_una - 1 - (conn->rdp.window_size * 2), conn->rdp.snd_nxt - 1);
 			goto discard_open;
 		}
@@ -986,7 +984,7 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 				"rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
 				conn->rdp.state, tx_header->syn, tx_header->ack, tx_header->eak,
 				tx_header->rst, csp_ntoh16(tx_header->seq_nr), csp_ntoh16(tx_header->ack_nr),
-				packet->length, packet->length - sizeof(rdp_header_t));
+				packet->length, (unsigned int)(packet->length - sizeof(rdp_header_t)));
 
 	conn->rdp.snd_nxt++;
 	return CSP_ERR_NONE;

@@ -117,7 +117,7 @@ int csp_conn_enqueue_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 int csp_conn_init(void) {
 
-	arr_conn = calloc(sizeof(csp_conn_t), csp_conf.conn_max);
+	arr_conn = csp_calloc(sizeof(csp_conn_t), csp_conf.conn_max);
 
 	/* Initialize source port */
 	srand(csp_get_ms());
@@ -465,8 +465,9 @@ void csp_conn_print_table(void) {
 				i, conn, conn->state, conn->idin.src, conn->idin.dst,
 				conn->idin.dport, conn->idin.sport, conn->socket);
 #ifdef CSP_USE_RDP
-		if (conn->idin.flags & CSP_FRDP)
+		if (conn->idin.flags & CSP_FRDP) {
 			csp_rdp_conn_print(conn);
+		}
 #endif
 	}
 }
@@ -485,7 +486,7 @@ int csp_conn_print_table_str(char * str_buf, int str_size) {
 		conn = &arr_conn[i];
 		snprintf(buf, sizeof(buf), "[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\n",
 				i, conn, conn->state, conn->idin.src, conn->idin.dst,
-				conn->idin.dport, conn->idin.sport, conn->socket);
+				conn->idin.sport, conn->idin.dport, conn->socket);
 
 		strncat(str_buf, buf, str_size);
 		if ((str_size -= strlen(buf)) <= 0)
