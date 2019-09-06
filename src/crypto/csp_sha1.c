@@ -214,4 +214,4 @@ void csp_sha1_memory(const uint8_t * msg, uint32_t len, uint8_t * hash) {
 
 }
 
-#endif
+#endif // CSP_USE_HMAC

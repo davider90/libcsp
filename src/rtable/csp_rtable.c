@@ -18,10 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "csp_rtable_internal.h"
+
 #include <alloca.h>
 #include <stdio.h>
 #include <csp/csp.h>
-#include <csp/csp_rtable.h>
 #include <csp/csp_iflist.h>
 #include <csp/interfaces/csp_if_lo.h>
 #include "../csp_init.h"
@@ -79,6 +80,23 @@ int csp_rtable_load(const char * rtable) {
 
 int csp_rtable_check(const char * rtable) {
 	return csp_rtable_parse(rtable, 1);
+}
+
+int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t mac) {
+
+	/* Legacy reference to default route (the old way) */
+	if (address == CSP_DEFAULT_ROUTE) {
+		netmask = 0;
+		address = 0;
+	}
+
+	/* Validates options */
+	if ((address > CSP_ID_HOST_MAX) || (ifc == NULL) || (ifc->nexthop == NULL) || (netmask > CSP_ID_HOST_SIZE)) {
+		csp_log_error("%s: invalid route: address %u, netmask %u, interface %p, mac %u", __FUNCTION__, address, netmask, ifc, mac);
+		return CSP_ERR_INVAL;
+	}
+
+        return csp_rtable_set_internal(address, netmask, ifc, mac);
 }
 
 typedef struct {

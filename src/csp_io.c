@@ -160,17 +160,19 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 
 }
 
-int csp_send_direct(csp_id_t idout, csp_packet_t * packet, csp_iface_t * ifout, uint32_t timeout) {
+int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_route_t * ifroute, uint32_t timeout) {
 
 	if (packet == NULL) {
 		csp_log_error("csp_send_direct called with NULL packet");
 		goto err;
 	}
 
-	if ((ifout == NULL) || (ifout->nexthop == NULL)) {
-		csp_log_error("No route to host: %#08x", idout.ext);
+	if (ifroute == NULL) {
+		csp_log_error("No route to host: %u (0x%08"PRIx32")", idout.dst, idout.ext);
 		goto err;
 	}
+
+	csp_iface_t * ifout = ifroute->interface;
 
 	csp_log_packet("OUT: S %u, D %u, Dp %u, Sp %u, Pr %u, Fl 0x%02X, Sz %u VIA: %s",
 		idout.src, idout.dst, idout.dport, idout.sport, idout.pri, idout.flags, packet->length, ifout->name);
@@ -251,7 +253,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, csp_iface_t * ifout, 
 	if (mtu > 0 && bytes > mtu)
 		goto tx_err;
 
-	if ((*ifout->nexthop)(ifout, packet, timeout) != CSP_ERR_NONE)
+	if ((*ifout->nexthop)(ifroute, packet, timeout) != CSP_ERR_NONE)
 		goto tx_err;
 
 	ifout->tx++;
@@ -286,8 +288,7 @@ int csp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 	}
 #endif
 
-	csp_iface_t * ifout = csp_rtable_find_iface(conn->idout.dst);
-	ret = csp_send_direct(conn->idout, packet, ifout, timeout);
+	ret = csp_send_direct(conn->idout, packet, csp_rtable_find_route(conn->idout.dst), timeout);
 
 	return (ret == CSP_ERR_NONE) ? 1 : 0;
 
@@ -404,8 +405,7 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
 	packet->id.sport = src_port;
 	packet->id.pri = prio;
 
-	csp_iface_t * ifout = csp_rtable_find_iface(dest);
-	if (csp_send_direct(packet->id, packet, ifout, timeout) != CSP_ERR_NONE)
+	if (csp_send_direct(packet->id, packet, csp_rtable_find_route(dest), timeout) != CSP_ERR_NONE)
 		return CSP_ERR_NOTSUP;
 	
 	return CSP_ERR_NONE;
