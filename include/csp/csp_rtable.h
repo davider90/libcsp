@@ -128,7 +128,9 @@ void csp_rtable_free(void);
 */
 void csp_rtable_print(void);
 
+/** Iterator for looping through the routing table. */
 typedef bool (*csp_rtable_iterator_t)(void * ctx, uint8_t address, uint8_t mask, const csp_rtable_route_t * route);
+
 /**
    Iterate routing table.
 */

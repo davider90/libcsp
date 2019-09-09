@@ -164,6 +164,13 @@ struct csp_cmp_message {
 
 /**
    Generic send management message request.
+
+   @param[in] node remote node address
+   @param[in] timeout timeout in mS.
+   @param[in] code request code.
+   @param[in] msg_size size of \a msg.
+   @param[in,out] msg data.
+   @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 int csp_cmp(uint8_t node, uint32_t timeout, uint8_t code, int msg_size, struct csp_cmp_message *msg);
 
@@ -180,10 +187,27 @@ CMP_MESSAGE(CSP_CMP_ROUTE_SET, route_set)
 CMP_MESSAGE(CSP_CMP_IF_STATS, if_stats)
 CMP_MESSAGE(CSP_CMP_CLOCK, clock)
 
+/**
+   Peek (read) memory on remote node.
+
+   @param[in] node remote node address
+   @param[in] timeout timeout in mS.
+   @param[in] msg Address and number of bytes to peek.
+   @param[out] msg Peeked memory.
+   @return #CSP_ERR_NONE on success, otherwise an error code.
+*/
 static inline int csp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
     return csp_cmp(node, timeout, CSP_CMP_PEEK, CMP_SIZE(peek) - sizeof(msg->peek.data) + msg->peek.len, msg);
 }
 
+/**
+   Poke (write) memory on remote node.
+
+   @param[in] node remote node address
+   @param[in] timeout timeout in mS.
+   @param[in] msg Address, number of bytes and the actual bytes to poke/write.
+   @return #CSP_ERR_NONE on success, otherwise an error code.
+*/
 static inline int csp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
     return csp_cmp(node, timeout, CSP_CMP_POKE, CMP_SIZE(poke) - sizeof(msg->poke.data) + msg->poke.len, msg);
 }

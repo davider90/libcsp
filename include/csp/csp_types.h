@@ -37,25 +37,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-/* Make bool for compilers without stdbool.h */
 #ifndef CSP_HAVE_STDBOOL_H
-#define bool int
-#define false 0
-#define true !false
+#define bool  int    //!< Make bool for compilers without stdbool.h
+#define false 0      //!< false value
+#define true  !false //!< true value.
 #endif
 
 /**
    Reserved ports for services.
 */
 enum csp_reserved_ports_e {
-	CSP_CMP				= 0,   //< CSP management, e.g. memory, routes, stats
-	CSP_PING			= 1,   //< Ping - return ping
-	CSP_PS				= 2,   //< Current process list
-	CSP_MEMFREE			= 3,   //< Free memory
-	CSP_REBOOT			= 4,   //< Reboot
-	CSP_BUF_FREE			= 5,   //< Free CSP buffers/packets.
-	CSP_UPTIME			= 6,   //< Uptime
-	CSP_ANY				= 255, //< Listen on any port
+	CSP_CMP				= 0,   //!< CSP management, e.g. memory, routes, stats
+	CSP_PING			= 1,   //!< Ping - return ping
+	CSP_PS				= 2,   //!< Current process list
+	CSP_MEMFREE			= 3,   //!< Free memory
+	CSP_REBOOT			= 4,   //!< Reboot, see #CSP_REBOOT_MAGIC and #CSP_REBOOT_SHUTDOWN_MAGIC
+	CSP_BUF_FREE			= 5,   //!< Free CSP buffers/packets.
+	CSP_UPTIME			= 6,   //!< Uptime
+	CSP_ANY				= 255, //!< Listen on any port
 };
 
 /**
@@ -113,7 +112,7 @@ typedef enum {
 #define CSP_ID_SPORT_MASK   		((uint32_t) CSP_ID_PORT_MAX  << (CSP_ID_FLAGS_SIZE))
 /** CSP identifier/header - flag mask */
 #define CSP_ID_FLAGS_MASK		((uint32_t) CSP_ID_FLAGS_MAX << (0))
-
+/** CSP identifier/header - connection mask (source/destination address and port) */
 #define CSP_ID_CONN_MASK		(CSP_ID_SRC_MASK | CSP_ID_DST_MASK | CSP_ID_DPORT_MASK | CSP_ID_SPORT_MASK)
 /**@}*/
 
@@ -198,6 +197,7 @@ typedef union {
 #define CSP_O_NOCRC32			CSP_SO_CRC32PROHIB //!< Disable CRC32
 /**@}*/
 
+/** Number of padding bytes in #csp_packet_t */
 #define CSP_PADDING_BYTES		8
 
 /**
@@ -209,13 +209,15 @@ typedef struct __attribute__((__packed__)) {
 	uint16_t length;			//!< Length field must be just before CSP ID
 	csp_id_t id;				//!< CSP id must be just before data
 	union {
-		uint8_t data[0];		/**< This just points to the rest of the buffer, without a size indication. */
-		uint16_t data16[0];		/**< The data 16 and 32 types makes it easy to reference an integer (properly aligned) */
-		uint32_t data32[0];		/**< without the compiler warning about strict aliasing rules. */
+		uint8_t data[0];		//!< This just points to the rest of the buffer, without a size indication.
+		uint16_t data16[0];		//!< The data 16 and 32 types makes it easy to reference an integer (properly aligned)
+		uint32_t data32[0];		//!< without the compiler warning about strict aliasing rules.
 	};
 } csp_packet_t;
 
+/** Forward declaration of CSP interface, see #csp_iface_s for details. */
 typedef struct csp_iface_s csp_iface_t;
+/** Forward declaration of outgoing CSP route, see #csp_rtable_route_s for details. */
 typedef struct csp_rtable_route_s csp_rtable_route_t;
 /** Interface TX function */
 typedef int (*nexthop_t)(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_t timeout);
@@ -249,15 +251,19 @@ struct csp_iface_s {
  */
 #define CSP_BUFFER_PACKET_OVERHEAD 	(sizeof(csp_packet_t) - sizeof(((csp_packet_t *)0)->data))
 
-/** Forward declaration of socket and connection structures */
+/** Forward declaration of socket structure */
 typedef struct csp_conn_s csp_socket_t;
+/** Forward declaration of connection structure */
 typedef struct csp_conn_s csp_conn_t;
 
+/** Max length of host name - including zero termination */
 #define CSP_HOSTNAME_LEN	20
+/** Max length of model name - including zero termination */
 #define CSP_MODEL_LEN		30
 
-/* CSP_REBOOT magic values */
+/** Magic number for reboot request, for service-code #CSP_REBOOT */
 #define CSP_REBOOT_MAGIC		0x80078007
+/** Magic number for shutdown request, for service-code #CSP_REBOOT */
 #define CSP_REBOOT_SHUTDOWN_MAGIC	0xD1E5529A
 
 #ifdef __AVR__
