@@ -1,5 +1,25 @@
+/*
+Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
+Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 #ifndef CSP_IF_ZMQHUB_H_
 #define CSP_IF_ZMQHUB_H_
+
 /**
    @file
 
@@ -10,7 +30,8 @@
 
    For further details on ZMQ, see http://www.zeromq.org.
 */
-#include <csp/csp.h>
+
+#include <csp/csp_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,12 +53,12 @@ extern "C" {
    Default ZMQ interface name.
 */
 #define CSP_ZMQHUB_IF_NAME            "ZMQHUB"
-    
+
 /**
    Format endpoint connection string for ZMQ.
 
    @param[in] host host name of IP.
-   @param[in] port IP port
+   @param[in] port IP port.
    @param[out] buf user allocated buffer for receiving formatted string.
    @param[in] buf_size size of \a buf.
    @return #CSP_ERR_NONE on succcess.
@@ -83,4 +104,4 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 #ifdef __cplusplus
 }
 #endif
-#endif /* CSP_IF_ZMQHUB_H_ */
+#endif

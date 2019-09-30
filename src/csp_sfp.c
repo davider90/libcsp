@@ -66,10 +66,10 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize,
 			size = mtu;
 
 		/* Print debug */
-		csp_log_protocol("Sending SFP at %p size %u", data + count, size);
+		csp_log_protocol("Sending SFP at %p size %u", ((uint8_t*)data) + count, size);
 
 		/* Copy data */
-		(memcpyfcn)((csp_memptr_t)(uintptr_t)packet->data, (csp_memptr_t)(uintptr_t)(data + count), size);
+		(memcpyfcn)((csp_memptr_t)(uintptr_t)packet->data, (csp_memptr_t)(uintptr_t)(((uint8_t*)data) + count), size);
 		packet->length = size;
 
 		/* Set fragment flag */
@@ -96,7 +96,7 @@ int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize,
 }
 
 int csp_sfp_send(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout) {
-	return csp_sfp_send_own_memcpy(conn, data, totalsize, mtu, timeout, &memcpy);
+    return csp_sfp_send_own_memcpy(conn, data, totalsize, mtu, timeout, (csp_memcpy_fnc_t) &memcpy);
 }
 
 int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout, csp_packet_t * first_packet) {
@@ -150,7 +150,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t
 
 		/* Copy data to output */
 		*datasize = sfp_header->totalsize;
-		memcpy(*dataout + sfp_header->offset, packet->data, packet->length);
+		memcpy(((uint8_t*)*dataout) + sfp_header->offset, packet->data, packet->length);
 
 		if (sfp_header->offset + packet->length >= sfp_header->totalsize) {
 			csp_log_protocol("SFP complete");

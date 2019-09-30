@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdint.h>
 #include <stddef.h>
 #include <csp/csp_autoconfig.h> // -> CSP_HAVE_X defines
+#include <csp/csp_error.h>
 #ifdef CSP_HAVE_STDBOOL_H
 #include <stdbool.h>
 #endif
@@ -100,7 +101,7 @@ typedef enum {
 #define CSP_ID_PORT_MAX			((1 << (CSP_ID_PORT_SIZE)) - 1)  //!< Max port value in header
 #define CSP_ID_FLAGS_MAX		((1 << (CSP_ID_FLAGS_SIZE)) - 1) //!< Max flag(s) value in header
 
-/** CSP identifier/header - prioritymask */
+/** CSP identifier/header - priority mask */
 #define CSP_ID_PRIO_MASK		((uint32_t) CSP_ID_PRIO_MAX  << (CSP_ID_FLAGS_SIZE + (2 * CSP_ID_PORT_SIZE) + (2 * CSP_ID_HOST_SIZE)))
 /** CSP identifier/header - source address mask */
 #define CSP_ID_SRC_MASK	 		((uint32_t) CSP_ID_HOST_MAX  << (CSP_ID_FLAGS_SIZE + (2 * CSP_ID_PORT_SIZE) + (1 * CSP_ID_HOST_SIZE)))
@@ -112,7 +113,7 @@ typedef enum {
 #define CSP_ID_SPORT_MASK   		((uint32_t) CSP_ID_PORT_MAX  << (CSP_ID_FLAGS_SIZE))
 /** CSP identifier/header - flag mask */
 #define CSP_ID_FLAGS_MASK		((uint32_t) CSP_ID_FLAGS_MAX << (0))
-/** CSP identifier/header - connection mask (source/destination address and port) */
+/** CSP identifier/header - connection mask (source & destination address + source & destination ports) */
 #define CSP_ID_CONN_MASK		(CSP_ID_SRC_MASK | CSP_ID_DST_MASK | CSP_ID_DPORT_MASK | CSP_ID_SPORT_MASK)
 /**@}*/
 
@@ -197,59 +198,53 @@ typedef union {
 #define CSP_O_NOCRC32			CSP_SO_CRC32PROHIB //!< Disable CRC32
 /**@}*/
 
-/** Number of padding bytes in #csp_packet_t */
-#define CSP_PADDING_BYTES		8
+/**
+   Padding size in #csp_packet_t.
+   10 bytes ensure correct aligned \a id and \a data in #csp_packet_t.
+*/
+#define CSP_PADDING_BYTES		10
 
 /**
-   CSP Packet structure.
-   This structure is constructed to fit with all interface frame types in order to have buffer reuse.
+   CSP Packet.
+
+   This structure is constructed to fit with all interface and protocols to prevent the need to copy data.
+
+   @note In most cases a CSP packet cannot be reused in case of send failure, because the lower layers may add additional data causing 
+   increased length (e.g. CRC32), convert the CSP id/ to different endian (e.g. I2C), etc.
 */
-typedef struct __attribute__((__packed__)) {
-	uint8_t padding[CSP_PADDING_BYTES];	//!< Interface dependent padding
-	uint16_t length;			//!< Length field must be just before CSP ID
-	csp_id_t id;				//!< CSP id must be just before data
+// TODO typedef struct __attribute__((__packed__)) {
+typedef struct {
+	/** Padding. These bytes are used by some interface or protocols to store local data. */
+	uint8_t padding[CSP_PADDING_BYTES];
+        /** Data length. Must be just before CSP ID. */
+	uint16_t length;
+	/** CSP id. Must be just before data, as it allows the interface to id and data in a single operation. */
+	csp_id_t id;
+	/**
+           Data part of packet.
+           When using the csp_buffer API, the data part is set by csp_buffer_init(), and can later be accessed by csp_buffer_data_size()
+        */
 	union {
-		uint8_t data[0];		//!< This just points to the rest of the buffer, without a size indication.
-		uint16_t data16[0];		//!< The data 16 and 32 types makes it easy to reference an integer (properly aligned)
-		uint32_t data32[0];		//!< without the compiler warning about strict aliasing rules.
+		/** Access data as uint8_t. */
+		uint8_t data[0];
+		/** Access data as uint16_t */
+		uint16_t data16[0];
+		/** Access data as uint32_t */
+		uint32_t data32[0];
 	};
 } csp_packet_t;
+
+/**
+   Size of the packet overhead in #csp_packet_t.
+   The overhead is the difference between the total buffer size (returned by csp_buffer_size()) and the data part
+   of the #csp_packet_t (returned by csp_buffer_data_size()).
+*/
+#define CSP_BUFFER_PACKET_OVERHEAD      (sizeof(csp_packet_t) - sizeof(((csp_packet_t *)0)->data))
 
 /** Forward declaration of CSP interface, see #csp_iface_s for details. */
 typedef struct csp_iface_s csp_iface_t;
 /** Forward declaration of outgoing CSP route, see #csp_rtable_route_s for details. */
 typedef struct csp_rtable_route_s csp_rtable_route_t;
-/** Interface TX function */
-typedef int (*nexthop_t)(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_t timeout);
-
-/**
-   Interface struct
-*/
-struct csp_iface_s {
-	const char *name;			//!< Interface name, name should not exceed #CSP_IFLIST_NAME_MAX
-	void * driver;				//!< Pointer to interface handler structure
-	nexthop_t nexthop;			//!< Next hop function
-	uint16_t mtu;				//!< Maximum Transmission Unit of interface
-	uint8_t split_horizon_off;		//!< Disable the route-loop prevention on if
-	uint32_t tx;				//!< Successfully transmitted packets
-	uint32_t rx;				//!< Successfully received packets
-	uint32_t tx_error;			//!< Transmit errors
-	uint32_t rx_error;			//!< Receive errors
-	uint32_t drop;				//!< Dropped packets
-	uint32_t autherr; 			//!< Authentication errors
-	uint32_t frame;				//!< Frame format errors
-	uint32_t txbytes;			//!< Transmitted bytes
-	uint32_t rxbytes;			//!< Received bytes
-	uint32_t irq;				//!< Interrupts
-	csp_iface_t *next;			//!< Next interface
-};
-
-/**
- * This define must be equal to the size of the packet overhead in csp_packet_t.
- * It is used in csp_buffer_get() to check the allocated buffer size against
- * the required buffer size.
- */
-#define CSP_BUFFER_PACKET_OVERHEAD 	(sizeof(csp_packet_t) - sizeof(((csp_packet_t *)0)->data))
 
 /** Forward declaration of socket structure */
 typedef struct csp_conn_s csp_socket_t;
@@ -281,6 +276,11 @@ typedef const void * csp_const_memptr_t;
 */
 typedef csp_memptr_t (*csp_memcpy_fnc_t)(csp_memptr_t, csp_const_memptr_t, size_t);
 
+/**
+   Compile check/asserts.
+*/
+#define CSP_STATIC_ASSERT(condition, name)   typedef char name[(condition) ? 1 : -1]
+    
 #ifdef __cplusplus
 }
 #endif

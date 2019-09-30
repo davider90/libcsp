@@ -32,21 +32,22 @@ static int csp_rtable_parse(const char * rtable, int dry_run) {
 	int valid_entries = 0;
 
 	/* Copy string before running strtok */
-	char * str = alloca(strlen(rtable) + 1);
-	memcpy(str, rtable, strlen(rtable) + 1);
+        const size_t str_len = strlen(rtable) + 1;
+	char * str = alloca(str_len);
+	memcpy(str, rtable, str_len);
 
 	/* Get first token */
-	str = strtok(str, ",");
-
+        char * saveptr;
+	str = strtok_r(str, ",", &saveptr);
 	while ((str) && (strlen(str) > 1)) {
 		unsigned int address = 0, netmask = 0, mac = CSP_NODE_MAC;
-		char name[10] = {};
-		if (sscanf(str, "%u/%u %s %u", &address, &netmask, name, &mac) == 4) {
-                } else if (sscanf(str, "%u/%u %s", &address, &netmask, name) == 3) {
+		char name[15] = {};
+		if (sscanf(str, "%u/%u %14s %u", &address, &netmask, name, &mac) == 4) {
+                } else if (sscanf(str, "%u/%u %14s", &address, &netmask, name) == 3) {
                     mac = CSP_NODE_MAC;
-                } else if (sscanf(str, "%u %s %u", &address, name, &mac) == 3) {
+                } else if (sscanf(str, "%u %14s %u", &address, name, &mac) == 3) {
                     netmask = CSP_ID_HOST_SIZE;
-                } else if (sscanf(str, "%u %s", &address, name) == 3) {
+                } else if (sscanf(str, "%u %14s", &address, name) == 3) {
                     netmask = CSP_ID_HOST_SIZE;
                     mac = CSP_NODE_MAC;
                 } else {
@@ -68,7 +69,7 @@ static int csp_rtable_parse(const char * rtable, int dry_run) {
                     }
 		}
 		valid_entries++;
-		str = strtok(NULL, ",");
+		str = strtok_r(NULL, ",", &saveptr);
 	}
 
 	return valid_entries;
@@ -91,8 +92,9 @@ int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t m
 	}
 
 	/* Validates options */
-	if ((address > CSP_ID_HOST_MAX) || (ifc == NULL) || (ifc->nexthop == NULL) || (netmask > CSP_ID_HOST_SIZE)) {
-		csp_log_error("%s: invalid route: address %u, netmask %u, interface %p, mac %u", __FUNCTION__, address, netmask, ifc, mac);
+	if (((address > CSP_ID_HOST_MAX) && (address != 255)) || (ifc == NULL) || (ifc->nexthop == NULL) || (netmask > CSP_ID_HOST_SIZE)) {
+		csp_log_error("%s: invalid route: address %u, netmask %u, interface %p (%s), mac %u",
+                              __FUNCTION__, address, netmask, ifc, (ifc != NULL) ? ifc->name : "", mac);
 		return CSP_ERR_INVAL;
 	}
 

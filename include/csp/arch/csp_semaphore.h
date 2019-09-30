@@ -72,7 +72,7 @@ typedef pthread_queue_t * csp_mutex_t;
 typedef HANDLE csp_bin_sem_handle_t;
 typedef HANDLE csp_mutex_t;
 
-#endif
+#endif // CSP_WINDOWS
 
 /* FreeRTOS interface */
 #if defined(CSP_FREERTOS)
@@ -101,7 +101,6 @@ int csp_bin_sem_post(csp_bin_sem_handle_t * sem);
 int csp_bin_sem_post_isr(csp_bin_sem_handle_t * sem, CSP_BASE_TYPE * task_woken);
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-
-#endif // _CSP_SEMAPHORE_H_
+#endif

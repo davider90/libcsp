@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 csp_conf_t csp_conf;
 
-uint8_t csp_get_address(void)
-{
+uint8_t csp_get_address(void) {
+
 	return csp_conf.address;
 }
 
@@ -43,9 +43,7 @@ int csp_init(const csp_conf_t * conf) {
 	 * unless specific get/set functions are made */
 	memcpy(&csp_conf, conf, sizeof(csp_conf));
 
-	int ret;
-
-	ret = csp_conn_init();
+	int ret = csp_conn_init();
 	if (ret != CSP_ERR_NONE)
 		return ret;
 
@@ -74,6 +72,8 @@ void csp_free_resources(void) {
 
 	csp_port_free_resources();
 	csp_rtable_free();
+        void csp_buffer_free_resources(void);
+	csp_buffer_free_resources();
 
 }
 

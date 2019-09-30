@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
    @file
+
    CSP error codes.
 */
 
@@ -31,9 +32,9 @@ extern "C" {
 #endif
 
 /**
- * @defgroup CSP_ERR CSP error codes.
- * @{
- */
+   @defgroup CSP_ERR CSP error codes.
+   @{
+*/
 #define CSP_ERR_NONE		 0		/**< No error */
 #define CSP_ERR_NOMEM		-1		/**< Not enough memory */
 #define CSP_ERR_INVAL		-2		/**< Invalid argument */
@@ -53,7 +54,6 @@ extern "C" {
 /**@}*/
     
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-
-#endif // _CSP_ERROR_H_
+#endif
