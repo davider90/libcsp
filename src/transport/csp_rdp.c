@@ -60,15 +60,20 @@ static uint32_t csp_rdp_ack_delay_count = 4 / 2;
 /* Used for queue calls */
 static CSP_BASE_TYPE pdTrue = 1;
 
-typedef struct __attribute__((__packed__)) {
-	/* The timestamp is placed in the padding bytes */
-	uint8_t padding[CSP_PADDING_BYTES - 2 * sizeof(uint32_t)];
-	uint32_t quarantine;	// EACK quarantine period
-	uint32_t timestamp;	// Time the message was sent
+/* RDP header - on top of csp_packet_t */
+typedef struct {
+	uint32_t quarantine;	// EACK quarantine period (-> csp_packet_t.padding)
+	uint32_t timestamp;	// Time the message was sent (-> csp_packet_t.padding)
+	uint8_t padding[CSP_PADDING_BYTES - (2 * sizeof(uint32_t))];
 	uint16_t length;	// Length field must be just before CSP ID
 	csp_id_t id;		// CSP id must be just before data
 	uint8_t data[];		// This just points to the rest of the buffer, without a size indication.
 } rdp_packet_t;
+
+// Ensure certain fields in the rdp_packet_t matches the fields in the csp_packet_t
+CSP_STATIC_ASSERT(offsetof(rdp_packet_t, length) == offsetof(csp_packet_t, length), length_field_misaligned);
+CSP_STATIC_ASSERT(offsetof(rdp_packet_t, id) == offsetof(csp_packet_t, id), id_field_misaligned);
+CSP_STATIC_ASSERT(offsetof(rdp_packet_t, data) == offsetof(csp_packet_t, data), data_field_misaligned);
 
 typedef struct __attribute__((__packed__)) {
 	union __attribute__((__packed__)) {
@@ -1099,4 +1104,4 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 }
 #endif
 
-#endif
+#endif // CSP_USE_RDP

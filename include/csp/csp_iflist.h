@@ -24,48 +24,44 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /**
    @file
 
-   Interfaces.
+   Interface list.
 
    Linked-list of interfaces in the system.
+
    This API is not thread-safe.
 */
 
-#include <csp/csp_types.h>
-#include <csp/csp_error.h>
+#include <csp/csp_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
-   Max length of name compared, when matching names.
-*/
-#define CSP_IFLIST_NAME_MAX    10
+   Add interface to the list.
 
-/**
-   Add interface to list.
-   The interface pointer must remain valid as long as the applicatio is running.
-   @param[in] ifc interface
-   @return #CSP_ERR_NONE on success
-   @return #CSP_ERR_ALREADY if interface already added
+   @param[in] iface interface. The interface must remain valid as long as the application is running.
+   @return #CSP_ERR_NONE on success, otherwise an error code.
 */
-int csp_iflist_add(csp_iface_t *ifc);
+int csp_iflist_add(csp_iface_t * iface);
 
 /**
    Get interface by name.
-   @param name interface name
-   @return Interface or NULL if not found
+
+   @param[in] name interface name.
+   @return Interface or NULL if not found.
 */
 csp_iface_t * csp_iflist_get_by_name(const char *name);
 
 /**
-   Print list of interfaces to stdout
+   Print list of interfaces to stdout.
 */
 void csp_iflist_print(void);
 
 /**
    Return list of interfaces.
-   @return First interface or NULL if no interfaces added.
+
+   @return First interface or NULL, if no interfaces added.
 */
 csp_iface_t * csp_iflist_get(void);
 
@@ -77,4 +73,4 @@ int csp_bytesize(char *buffer, int buffer_len, unsigned long int bytes);
 #ifdef __cplusplus
 }
 #endif
-#endif /* CSP_IFLIST_H_ */
+#endif

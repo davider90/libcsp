@@ -67,6 +67,7 @@ def options(ctx):
     gr.add_option('--with-loglevel', metavar='LEVEL', default='debug', help='Set minimum compile time log level. Must be one of \'error\', \'warn\', \'info\' or \'debug\'')
     gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type: \'static\' or \'cidr\'')
 
+
 def configure(ctx):
     # Validate options
     valid_os = ['posix', 'windows', 'freertos', 'macosx']
@@ -242,7 +243,7 @@ def build(ctx):
         if 'src/interfaces/csp_if_zmqhub.c' in ctx.env.FILES_CSP:
             ctx.install_files('${PREFIX}/include/csp/interfaces', 'include/csp/interfaces/csp_if_zmqhub.h')
         if 'src/drivers/usart/usart_{0}.c'.format(ctx.options.with_driver_usart) in ctx.env.FILES_CSP:
-            ctx.install_as('${PREFIX}/include/csp/drivers/usart.h', 'include/csp/drivers/usart.h')            
+            ctx.install_as('${PREFIX}/include/csp/drivers/usart.h', 'include/csp/drivers/usart.h')
         if 'src/drivers/can/can_socketcan.c' in ctx.env.FILES_CSP:
             ctx.install_as('${PREFIX}/include/csp/drivers/can_socketcan.h', 'include/csp/drivers/can_socketcan.h')
 

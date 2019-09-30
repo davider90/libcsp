@@ -761,14 +761,10 @@ static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    csp_can_socketcan_init(ifc, bitrate, promisc);
+    csp_can_socketcan_init(ifc, CSP_IF_CAN_DEFAULT_NAME, bitrate, promisc);
     Py_RETURN_NONE;
 }
 
-
-/**
- * csp/interfaces/csp_if_kiss.h
- */
 
 /*
  * int csp_kiss_init(char addr, char * host);
@@ -776,23 +772,17 @@ static PyObject* pycsp_can_socketcan_init(PyObject *self, PyObject *args)
 static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
 	char* device;
 	uint32_t baudrate = 500000;
-	uint32_t mtu = 512; 
-	const char* if_name = "KISS";
+	uint32_t mtu = 512;
+	const char* if_name = CSP_IF_KISS_DEFAULT_NAME;
 	if (!PyArg_ParseTuple(args, "s|IIs", &device, &baudrate, &mtu, &if_name)) {
 		return NULL; // TypeError is thrown
 	}
 
-	static csp_iface_t csp_if_kiss;
-	static csp_kiss_handle_t csp_kiss_driver;
-	csp_if_kiss.mtu = (uint16_t) mtu;
-	struct usart_conf conf = {.device = device, .baudrate = baudrate};
-	csp_kiss_init(&csp_if_kiss, &csp_kiss_driver, usart_putc, usart_insert, if_name);
-	usart_init(&conf);
-	
-	void my_usart_rx(uint8_t * buf, int len, void * pxTaskWoken) {
-		csp_kiss_rx(&csp_if_kiss, buf, len, pxTaskWoken);
-	}
-	usart_set_callback(my_usart_rx);
+        struct usart_conf conf = {.device = device, .baudrate = baudrate};
+        int res = usart_open_and_add_kiss_interface(&conf, if_name, NULL);
+        if (res != CSP_ERR_NONE) {
+		return NULL; // TypeError is thrown
+        }
 
 	Py_RETURN_NONE;
 }

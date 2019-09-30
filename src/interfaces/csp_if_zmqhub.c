@@ -52,7 +52,7 @@ typedef struct {
  */
 int csp_zmqhub_tx(const csp_rtable_route_t * route, csp_packet_t * packet, uint32_t timeout) {
 
-	zmq_driver_t * drv = route->interface->driver;
+	zmq_driver_t * drv = route->interface->driver_data;
 
 	const uint8_t dest = (route->mac != CSP_NODE_MAC) ? route->mac : packet->id.dst;
 
@@ -172,7 +172,7 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 	drv->interface.name = alloc_name;
 	assert(alloc_name);
 	strcpy(alloc_name, name);
-	drv->interface.driver = drv;
+	drv->interface.driver_data = drv;
 	drv->interface.nexthop = csp_zmqhub_tx;
 	drv->interface.mtu = CSP_ZMQ_MTU; // there is actually no 'max' MTU on ZMQ, but assuming the other end is based on the same code
 

@@ -26,30 +26,65 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Interface.
 */
 
-#include <csp/csp.h>
+#include <csp/csp_platform.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Inputs a new packet into the system
- * This function is called from interface drivers ISR to route and accept packets.
- * But it can also be called from a task, provided that the pxTaskWoken parameter is NULL!
- *
- * EXTREMELY IMPORTANT:
- * pxTaskWoken arg must ALWAYS be NULL if called from task,
- * and ALWAYS be NON NULL if called from ISR!
- * If this condition is met, this call is completely thread-safe
- *
- * This function is fire and forget, it returns void, meaning
- * that a packet will always be either accepted or dropped
- * so the memory will always be freed.
- *
- * @param packet A pointer to the incoming packet
- * @param interface A pointer to the incoming interface TX function.
- * @param pxTaskWoken This must be a pointer a valid variable if called from ISR or NULL otherwise!
- */
+   Max unique length of interface name, when matching names.
+*/
+#define CSP_IFLIST_NAME_MAX    10
+
+/**
+   Interface Tx function.
+
+   @param[in] ifroute contains the interface and the \a mac adddress.
+   @param[in] packet CSP packet to send. On success, the packet must be freed using csp_buffer_free().
+   @param[in] timeout max time to wait for Tx to complete.
+   @return #CSP_ERR_NONE on success, otherwise an error code.
+*/
+typedef int (*nexthop_t)(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_t timeout);
+
+/**
+   CSP interface.
+*/
+struct csp_iface_s {
+	const char *name;			//!< Interface name, name should not exceed #CSP_IFLIST_NAME_MAX
+	void * interface_data;			//!< Interface data, can be used by the specific interface layer (e.g. KISS) for state information.
+	void * driver_data;			//!< Driver data, can be used by the driver layer to identify a specific device/channel.
+	nexthop_t nexthop;			//!< Next hop function
+	uint16_t mtu;				//!< Maximum Transmission Unit of interface
+	uint8_t split_horizon_off;		//!< Disable the route-loop prevention on if
+	uint32_t tx;				//!< Successfully transmitted packets
+	uint32_t rx;				//!< Successfully received packets
+	uint32_t tx_error;			//!< Transmit errors
+	uint32_t rx_error;			//!< Receive errors, e.g. too large message
+	uint32_t drop;				//!< Dropped packets
+	uint32_t autherr; 			//!< Authentication errors
+	uint32_t frame;				//!< Frame format errors
+	uint32_t txbytes;			//!< Transmitted bytes
+	uint32_t rxbytes;			//!< Received bytes
+	uint32_t irq;				//!< Interrupts
+	struct csp_iface_s *next;		//!< Next interface (internal use)
+};
+    
+/**
+   Inputs a new packet into the system.
+
+   This function can be called from interface drivers (ISR) or tasks, to route and accept packets.
+
+   @note EXTREMELY IMPORTANT: \a pxTaskWoken must ALWAYS be NULL if called from task, and ALWAYS
+   be NON NULL if called from ISR. If this condition is met, this call is completely thread-safe
+
+   This function is fire and forget, it returns void, meaning that the \a packet will always be
+   either accepted or dropped, so the memory will always be freed.
+
+   @param[in] packet A pointer to the incoming packet
+   @param[in] interface A pointer to the incoming interface TX function.
+   @param[out] pxTaskWoken Valid reference if called from ISR, otherwise NULL!
+*/
 void csp_qfifo_write(csp_packet_t *packet, csp_iface_t *interface, CSP_BASE_TYPE *pxTaskWoken);
 
 #ifdef __cplusplus

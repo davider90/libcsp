@@ -456,11 +456,8 @@ inline int csp_conn_flags(csp_conn_t * conn) {
 #ifdef CSP_DEBUG
 void csp_conn_print_table(void) {
 
-	int i;
-	csp_conn_t * conn;
-
-	for (i = 0; i < csp_conf.conn_max; i++) {
-		conn = &arr_conn[i];
+	for (unsigned int i = 0; i < csp_conf.conn_max; i++) {
+		csp_conn_t * conn = &arr_conn[i];
 		printf("[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\r\n",
 				i, conn, conn->state, conn->idin.src, conn->idin.dst,
 				conn->idin.dport, conn->idin.sport, conn->socket);
@@ -474,23 +471,20 @@ void csp_conn_print_table(void) {
 
 int csp_conn_print_table_str(char * str_buf, int str_size) {
 
-	int i, start = 0;
-	csp_conn_t * conn;
-	char buf[100];
-
 	/* Display up to 10 connections */
-	if (csp_conf.conn_max - 10 > 0)
-		start = csp_conf.conn_max - 10;
+	unsigned int start = (csp_conf.conn_max > 10) ? (csp_conf.conn_max - 10) : 0;
 
-	for (i = start; i < csp_conf.conn_max; i++) {
-		conn = &arr_conn[i];
+	for (unsigned int i = start; i < csp_conf.conn_max; i++) {
+		csp_conn_t * conn = &arr_conn[i];
+		char buf[100];
 		snprintf(buf, sizeof(buf), "[%02u %p] S:%u, %u -> %u, %u -> %u, sock: %p\n",
 				i, conn, conn->state, conn->idin.src, conn->idin.dst,
 				conn->idin.sport, conn->idin.dport, conn->socket);
 
 		strncat(str_buf, buf, str_size);
-		if ((str_size -= strlen(buf)) <= 0)
+		if ((str_size -= strlen(buf)) <= 0) {
 			break;
+		}
 	}
 
 	return CSP_ERR_NONE;
