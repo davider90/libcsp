@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* Max number of bytes per CAN frame */
 #define MAX_BYTES_IN_CAN_FRAME 8
+#define CFP_OVERHEAD           (sizeof(csp_id_t) + sizeof(uint16_t))
+#define MAX_CAN_DATA_SIZE      (((1 << CFP_REMAIN_SIZE) * MAX_BYTES_IN_CAN_FRAME) - CFP_OVERHEAD)
 
 /* CFP type */
 enum cfp_frame_t {
@@ -179,15 +181,12 @@ int csp_can_tx(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_
         csp_iface_t * iface = ifroute->interface;
         csp_can_interface_data_t * ifdata = iface->interface_data;
 
-	/* Get an unique CFP id - TODO lock? can be accessed from multiple tasks doing send */
+	/* Get an unique CFP id - this should be locked to prevent access from multiple tasks */
 	const uint32_t ident = ifdata->cfp_frame_id++;
 
-	/* Calculate overhead */
-	const uint8_t overhead = sizeof(csp_id_t) + sizeof(uint16_t);
-
 	/* Check protocol's max length - limit is 1 (first) frame + as many frames that can be specified in 'remain' */
-        if (packet->length > (((1 << CFP_REMAIN_SIZE) * MAX_BYTES_IN_CAN_FRAME) - overhead)) {
-			return CSP_ERR_TX;
+        if (packet->length > MAX_CAN_DATA_SIZE) {
+		return CSP_ERR_TX;
         }
 
 	/* Insert destination node mac address into the CFP destination field */
@@ -198,20 +197,20 @@ int csp_can_tx(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_
                        CFP_MAKE_DST(dest) |
                        CFP_MAKE_ID(ident) |
                        CFP_MAKE_TYPE(CFP_BEGIN) |
-                       CFP_MAKE_REMAIN((packet->length + overhead - 1) / MAX_BYTES_IN_CAN_FRAME));
+                       CFP_MAKE_REMAIN((packet->length + CFP_OVERHEAD - 1) / MAX_BYTES_IN_CAN_FRAME));
 
 	/* Calculate first frame data bytes */
-	uint8_t avail = MAX_BYTES_IN_CAN_FRAME - overhead;
+	const uint8_t avail = MAX_BYTES_IN_CAN_FRAME - CFP_OVERHEAD;
 	uint8_t bytes = (packet->length <= avail) ? packet->length : avail;
 
 	/* Copy CSP headers and data */
-	uint32_t csp_id_be = csp_hton32(packet->id.ext);
-	uint16_t csp_length_be = csp_hton16(packet->length);
+	const uint32_t csp_id_be = csp_hton32(packet->id.ext);
+	const uint16_t csp_length_be = csp_hton16(packet->length);
 
 	uint8_t frame_buf[MAX_BYTES_IN_CAN_FRAME];
 	memcpy(frame_buf, &csp_id_be, sizeof(csp_id_be));
 	memcpy(frame_buf + sizeof(csp_id_be), &csp_length_be, sizeof(csp_length_be));
-	memcpy(frame_buf + overhead, packet->data, bytes);
+	memcpy(frame_buf + CFP_OVERHEAD, packet->data, bytes);
 
 	/* Increment tx counter */
 	uint16_t tx_count = bytes;
@@ -219,7 +218,7 @@ int csp_can_tx(const csp_rtable_route_t * ifroute, csp_packet_t *packet, uint32_
         const csp_can_driver_tx_f tx_func = ifdata->tx_func;
 
 	/* Send first frame */
-	if ((tx_func)(iface->driver_data, id, frame_buf, overhead + bytes, timeout) != CSP_ERR_NONE) {
+	if ((tx_func)(iface->driver_data, id, frame_buf, CFP_OVERHEAD + bytes, timeout) != CSP_ERR_NONE) {
 		//csp_log_warn("Failed to send CAN frame in csp_tx_can");
 		iface->tx_error++;
 		return CSP_ERR_DRIVER;
@@ -263,6 +262,10 @@ int csp_can_add_interface(csp_iface_t * iface) {
 	if (ifdata->tx_func == NULL) {
 		return CSP_ERR_INVAL;
 	}
+
+        if ((iface->mtu == 0) || (iface->mtu > MAX_CAN_DATA_SIZE)) {
+            iface->mtu = MAX_CAN_DATA_SIZE;
+        }
 
         ifdata->cfp_frame_id = 0;
 

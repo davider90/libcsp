@@ -91,7 +91,7 @@ int usart_open(const usart_conf_t *conf, usart_callback_t rx_callback, void * us
    @return #CSP_ERR_NONE on success, otherwise an error code.
 */
 int usart_open_and_add_kiss_interface(const usart_conf_t *conf, const char * ifname, csp_iface_t ** return_iface);
-    
+
 #ifdef __cplusplus
 }
 #endif
