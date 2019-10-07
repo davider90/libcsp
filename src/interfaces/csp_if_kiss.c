@@ -23,26 +23,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_endian.h>
 #include <csp/csp_crc32.h>
 
-#define FEND  					0xC0
-#define FESC  					0xDB
-#define TFEND 					0xDC
-#define TFESC 					0xDD
-#define TNC_DATA				0x00
+#define FEND  		0xC0
+#define FESC  		0xDB
+#define TFEND 		0xDC
+#define TFESC 		0xDD
+#define TNC_DATA	0x00
 
 int csp_kiss_tx(const csp_rtable_route_t * ifroute, csp_packet_t * packet, uint32_t timeout) {
 
 	csp_kiss_interface_data_t * ifdata = ifroute->interface->interface_data;
 	void * driver = ifroute->interface->driver_data;
 
-	/* Add CRC32 checksum - TODO can this be a double crc32 and if so, is there room */
+	/* Add CRC32 checksum - the MTU setting ensures there are space */
 	csp_crc32_append(packet, false);
+
+	/* Lock */
+	if (csp_mutex_lock(&ifdata->lock, timeout) != CSP_MUTEX_OK) {
+            return CSP_ERR_TIMEDOUT;
+        }
 
 	/* Save the outgoing id in the buffer */
 	packet->id.ext = csp_hton32(packet->id.ext);
 	packet->length += sizeof(packet->id.ext);
-
-	/* Lock */
-	csp_mutex_lock(&ifdata->lock, 1000); // TODO timeout vs. check return
 
 	/* Transmit data */
         const unsigned char start[] = {FEND, TNC_DATA};
@@ -230,8 +232,9 @@ int csp_kiss_add_interface(csp_iface_t * iface) {
 	ifdata->rx_first = false;
 	ifdata->rx_packet = NULL;
 
-        if (iface->mtu == 0) {
-            iface->mtu = csp_buffer_data_size() - sizeof(uint32_t); // compensate for the added CRC32
+        const unsigned int max_data_size = csp_buffer_data_size() - sizeof(uint32_t); // compensate for the added CRC32
+        if ((iface->mtu == 0) || (iface->mtu > max_data_size)) {
+            iface->mtu = max_data_size;
         }
 
 	iface->nexthop = csp_kiss_tx;
