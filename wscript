@@ -3,7 +3,7 @@
 
 # Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 # Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-# Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
+# Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,7 @@ import os
 
 APPNAME = 'libcsp'
 VERSION = '1.6'
+
 
 def options(ctx):
     # Load GCC options
@@ -57,25 +58,29 @@ def options(ctx):
 
     # Drivers
     gr.add_option('--enable-can-socketcan', action='store_true', help='Enable Linux socketcan driver')
-    gr.add_option('--with-driver-usart', default=None, metavar='DRIVER', help='Build USART driver. [windows, linux, None]')
+    gr.add_option('--with-driver-usart', default=None, metavar='DRIVER',
+                  help='Build USART driver. [windows, linux, None]')
 
     # OS
-    gr.add_option('--with-os', metavar='OS', default='posix', help='Set operating system. Must be either \'posix\', \'macosx\', \'windows\' or \'freertos\'')
+    gr.add_option('--with-os', metavar='OS', default='posix',
+                  help='Set operating system. Must be either \'posix\', \'macosx\', \'windows\' or \'freertos\'')
     gr.add_option('--enable-init-shutdown', action='store_true', help='Use init system commands for shutdown/reboot')
 
     # Options
-    gr.add_option('--with-loglevel', metavar='LEVEL', default='debug', help='Set minimum compile time log level. Must be one of \'error\', \'warn\', \'info\' or \'debug\'')
-    gr.add_option('--with-rtable', metavar='TABLE', default='static', help='Set routing table type: \'static\' or \'cidr\'')
+    gr.add_option('--with-loglevel', metavar='LEVEL', default='debug',
+                  help='Set minimum compile time log level. Must be one of \'error\', \'warn\', \'info\' or \'debug\'')
+    gr.add_option('--with-rtable', metavar='TABLE', default='static',
+                  help='Set routing table type: \'static\' or \'cidr\'')
 
 
 def configure(ctx):
     # Validate options
     valid_os = ['posix', 'windows', 'freertos', 'macosx']
-    if not ctx.options.with_os in valid_os:
+    if ctx.options.with_os not in valid_os:
         ctx.fatal('--with-os must be either: ' + str(valid_os))
 
     valid_loglevel = ['error', 'warn', 'info', 'debug']
-    if not ctx.options.with_loglevel in valid_loglevel:
+    if ctx.options.with_loglevel not in valid_loglevel:
         ctx.fatal('--with-loglevel must be either: ' + str(valid_loglevel))
 
     # Setup and validate toolchain
@@ -98,7 +103,8 @@ def configure(ctx):
 
     # Setup CFLAGS
     if (len(ctx.stack_path) <= 1) and (len(ctx.env.CFLAGS) == 0):
-        ctx.env.prepend_value('CFLAGS', ["-std=gnu99", "-g", "-Os", "-Wall", "-Wextra", "-Wshadow", "-Wcast-align", "-Wwrite-strings", "-Wno-unused-parameter"])
+        ctx.env.prepend_value('CFLAGS', ["-std=gnu99", "-g", "-Os", "-Wall", "-Wextra", "-Wshadow", "-Wcast-align",
+                                         "-Wwrite-strings", "-Wno-unused-parameter"])
 
     # Setup extra includes
     ctx.env.append_unique('INCLUDES_CSP', ['include'] + ctx.options.includes.split(','))
@@ -159,9 +165,11 @@ def configure(ctx):
 
     # Check for python development
     if ctx.options.enable_bindings:
-        ctx.env.LIBCSP_PYTHON2 = ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7', mandatory=False)
+        ctx.env.LIBCSP_PYTHON2 = ctx.check_cfg(package='python2', args='--cflags --libs', atleast_version='2.7',
+                                               mandatory=False)
         if ctx.options.enable_python3_bindings:
-            ctx.env.LIBCSP_PYTHON3 = ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5', mandatory=False)
+            ctx.env.LIBCSP_PYTHON3 = ctx.check_cfg(package='python3', args='--cflags --libs', atleast_version='3.5',
+                                                   mandatory=False)
 
     # Check options
     if ctx.options.disable_output:
@@ -225,6 +233,7 @@ def configure(ctx):
 
     ctx.write_config_header('include/csp/csp_autoconfig.h')
 
+
 def build(ctx):
 
     # Set install path for header files
@@ -253,63 +262,63 @@ def build(ctx):
 
     ctx(features=ctx.env.FEATURES,
         source=ctx.path.ant_glob(ctx.env.FILES_CSP, excl=ctx.env.EXCL_CSP),
-        target = 'csp',
-        use = ['csp_h', 'freertos_h', 'util'],
-        install_path = install_path,
-    )
+        target='csp',
+        use=['csp_h', 'freertos_h', 'util'],
+        install_path=install_path)
 
     # Build shared library for Python bindings
     if ctx.env.ENABLE_BINDINGS:
-        ctx.shlib(source = ctx.path.ant_glob(ctx.env.FILES_CSP, excl=ctx.env.EXCL_CSP),
-                  name = 'csp_shlib',
-                  target = 'csp',
-                  use = ['csp_h', 'util_shlib'],
-                  lib = ctx.env.LIBS)
+        ctx.shlib(source=ctx.path.ant_glob(ctx.env.FILES_CSP, excl=ctx.env.EXCL_CSP),
+                  name='csp_shlib',
+                  target='csp',
+                  use=['csp_h', 'util_shlib'],
+                  lib=ctx.env.LIBS)
 
         # python3 bindings
         if ctx.env.LIBCSP_PYTHON3:
-            ctx.shlib(source = ['src/bindings/python/pycsp.c'],
-                      target = 'csp_py3',
-                      includes = ctx.env.INCLUDES_PYTHON3,
-                      use = ['csp_shlib'],
-                      lib = ctx.env.LIBS)
+            ctx.shlib(source=['src/bindings/python/pycsp.c'],
+                      target='csp_py3',
+                      includes=ctx.env.INCLUDES_PYTHON3,
+                      use=['csp_shlib'],
+                      lib=ctx.env.LIBS)
 
         # python2 bindings
         if ctx.env.LIBCSP_PYTHON2:
-            ctx.shlib(source = ['src/bindings/python/pycsp.c'],
-                      target = 'csp_py2',
-                      includes = ctx.env.INCLUDES_PYTHON2,
-                      use = ['csp_shlib'],
-                      lib = ctx.env.LIBS)
+            ctx.shlib(source=['src/bindings/python/pycsp.c'],
+                      target='csp_py2',
+                      includes=ctx.env.INCLUDES_PYTHON2,
+                      use=['csp_shlib'],
+                      lib=ctx.env.LIBS)
 
     if ctx.env.ENABLE_EXAMPLES:
-        ctx.program(source = 'examples/simple.c',
-                    target = 'simple',
-                    lib = ctx.env.LIBS,
-                    use = 'csp')
+        ctx.program(source='examples/simple.c',
+                    target='simple',
+                    lib=ctx.env.LIBS,
+                    use='csp')
 
         if ctx.options.enable_if_kiss:
-            ctx.program(source = 'examples/kiss.c',
-                        target = 'kiss',
-                        lib = ctx.env.LIBS,
-                        use = 'csp')
+            ctx.program(source='examples/kiss.c',
+                        target='kiss',
+                        lib=ctx.env.LIBS,
+                        use='csp')
 
         if ctx.options.enable_if_zmqhub:
-            ctx.program(source = 'examples/zmqproxy.c',
-                        target = 'zmqproxy',
-                        lib = ctx.env.LIBS,
-                        use = 'csp')
+            ctx.program(source='examples/zmqproxy.c',
+                        target='zmqproxy',
+                        lib=ctx.env.LIBS,
+                        use='csp')
 
         if 'posix' in ctx.env.OS:
-            ctx.program(source = 'examples/csp_if_fifo.c',
-                        target = 'fifo',
-                        lib = ctx.env.LIBS,
-                        use = ['csp'])
+            ctx.program(source='examples/csp_if_fifo.c',
+                        target='fifo',
+                        lib=ctx.env.LIBS,
+                        use=['csp'])
 
         if 'windows' in ctx.env.OS:
-            ctx.program(source = ctx.path.ant_glob('examples/csp_if_fifo_windows.c'),
-                        target = 'csp_if_fifo',
-                        use = 'csp')
+            ctx.program(source=ctx.path.ant_glob('examples/csp_if_fifo_windows.c'),
+                        target='csp_if_fifo',
+                        use='csp')
+
 
 def dist(ctx):
     ctx.excl = 'build/* **/.* **/*.pyc **/*.o **/*~ *.tar.gz'

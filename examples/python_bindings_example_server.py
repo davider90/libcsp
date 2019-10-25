@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
 # libcsp must be build with at least these options to run this example server:
-# ./waf distclean configure build --enable-bindings --enable-crc32 --enable-rdp --enable-if-zmq --with-driver-usart=linux --enable-if-kiss --enable-xtea --enable-if-can --enable-can-socketcan --enable-hmac --enable-examples
-
+# ./waf distclean configure build --enable-bindings --enable-crc32 --enable-rdp --enable-if-zmq
+#                                 --with-driver-usart=linux --enable-if-kiss --enable-xtea --enable-if-can
+#                                 --enable-can-socketcan --enable-hmac --enable-examples
 # Can be run from root of libcsp like this:
 # LD_LIBRARY_PATH=build PYTHONPATH=bindings/python:build python examples/python_bindings_example_server.py
 #
@@ -45,9 +46,9 @@ if __name__ == "__main__":
             continue
 
         print ("connection: source=%i:%i, dest=%i:%i" % (csp.conn_src(conn),
-                                                        csp.conn_sport(conn),
-                                                        csp.conn_dst(conn),
-                                                        csp.conn_dport(conn)))
+                                                         csp.conn_sport(conn),
+                                                         csp.conn_dst(conn),
+                                                         csp.conn_dport(conn)))
 
         while True:
             packet = csp.read(conn)
@@ -69,4 +70,3 @@ if __name__ == "__main__":
             else:
                 csp.service_handler(conn, packet)
         csp.close(conn)
-
