@@ -263,6 +263,10 @@ csp_conn_t * csp_conn_new(csp_id_t idin, csp_id_t idout) {
 }
 
 int csp_close(csp_conn_t * conn) {
+    return csp_conn_close(conn, CSP_RDP_CLOSE_SOURCE_USERSPACE);
+}
+
+int csp_conn_close(csp_conn_t * conn, uint8_t close_source) {
 
 	if (conn == NULL) {
 		csp_log_error("NULL Pointer given to csp_close");
@@ -277,7 +281,7 @@ int csp_close(csp_conn_t * conn) {
 #ifdef CSP_USE_RDP
 	/* Ensure RDP knows this connection is closing */
 	if ((conn->idin.flags & CSP_FRDP) || (conn->idout.flags & CSP_FRDP))
-		if (csp_rdp_close(conn) == CSP_ERR_AGAIN)
+		if (csp_rdp_close(conn, close_source) == CSP_ERR_AGAIN)
 			return CSP_ERR_NONE;
 #endif
 
