@@ -194,6 +194,11 @@ static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags,
 	idout = conn->idout;
 	idout.pri = conn->idout.pri < CSP_PRIO_HIGH ? conn->idout.pri : CSP_PRIO_HIGH;
 
+	csp_log_protocol("RDP %p: Send CMP S %u: syn %u, ack %u, eack %u, rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
+                         conn, conn->rdp.state, header->syn, header->ack, header->eak,
+                         header->rst, csp_ntoh16(header->seq_nr), csp_ntoh16(header->ack_nr),
+                         packet->length, (unsigned int)(packet->length - sizeof(rdp_header_t)));
+
 	/* Send packet to IF */
 	if (csp_send_direct(idout, packet, csp_rtable_find_route(idout.dst), 0) != CSP_ERR_NONE) {
 		csp_log_error("RDP %p: INTERFACE ERROR: not possible to send", conn);
@@ -497,9 +502,9 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	 */
 	if (conn->socket != NULL) {
 		if (csp_rdp_time_after(time_now, conn->timestamp + conn->rdp.conn_timeout)) {
-			csp_log_warn("RDP %p: Found a lost connection (now: %"PRIu32", ts: %"PRIu32", to: %"PRIu32"), closing now",
+			csp_log_warn("RDP %p: Found a lost connection (now: %"PRIu32", ts: %"PRIu32", to: %"PRIu32"), closing",
                                      conn, time_now, conn->timestamp, conn->rdp.conn_timeout);
-			csp_conn_close(conn, CSP_RDP_CLOSE_SOURCE_PROTOCOL);
+			csp_conn_close(conn, CSP_RDP_CLOSED_BY_PROTOCOL | CSP_RDP_CLOSED_BY_TIMEOUT);
 			return;
 		}
 	}
@@ -510,8 +515,8 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	 */
 	if (conn->rdp.state == RDP_CLOSE_WAIT) {
 		if (csp_rdp_time_after(time_now, conn->timestamp + conn->rdp.conn_timeout)) {
-			csp_log_protocol("RDP %p: CLOSE_WAIT timeout, closing now", conn);
-			csp_conn_close(conn, CSP_RDP_CLOSE_SOURCE_PROTOCOL);
+			csp_log_protocol("RDP %p: CLOSE_WAIT timeout, closing", conn);
+			csp_conn_close(conn, CSP_RDP_CLOSED_BY_TIMEOUT);
 		}
 		return;
 	}
@@ -577,12 +582,16 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	}
 }
 
-void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
+bool csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
+
+	bool close_connection = false;
 
 	/* Get RX header and convert to host byte-order */
 	rdp_header_t * rx_header = csp_rdp_header_ref(packet);
 	rx_header->ack_nr = csp_ntoh16(rx_header->ack_nr);
 	rx_header->seq_nr = csp_ntoh16(rx_header->seq_nr);
+
+        uint8_t closed_by = CSP_RDP_CLOSED_BY_PROTOCOL;
 
 	csp_log_protocol("RDP %p: Received in S %u: syn %u, ack %u, eack %u, "
 			"rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
@@ -599,27 +608,34 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		}
 
 		if (conn->rdp.state == RDP_CLOSED) {
-			csp_log_protocol("RDP %p: RST received in CLOSED - ignoring", conn);
-                        // TODO shouldn't we send back a RST?
+			csp_log_protocol("RDP %p: RST received in CLOSED - ignore", conn);
+			close_connection = (conn->socket != NULL);
 			goto discard_open;
                 }
 
 		if (conn->rdp.state == RDP_CLOSE_WAIT) {
-			csp_log_protocol("RDP %p: RST received in CLOSE_WAIT. Now closing connection", conn);
+			csp_log_protocol("RDP %p: RST received in CLOSE_WAIT, ack: %d - closing", conn, rx_header->ack);
+			if (rx_header->ack && CSP_USE_RDP_FAST_CLOSE) {
+				// skip timeout - the other end has acknowledged the RST
+				closed_by |= CSP_RDP_CLOSED_BY_TIMEOUT;
+			}
 			goto discard_close;
 		}
 
-		csp_log_protocol("RDP %p: Got RESET in state %u", conn, conn->rdp.state);
+		// TODO remove csp_log_protocol("RDP %p: Got RST in state %u", conn, conn->rdp.state);
 
-		if (rx_header->seq_nr == (uint16_t)(conn->rdp.rcv_cur + 1)) {
-			csp_log_protocol("RDP %p: RESET in sequence, no more data incoming, reply with RESET", conn);
+		if (rx_header->seq_nr == (conn->rdp.rcv_cur + 1)) {
+			csp_log_protocol("RDP %p: Received RST in sequence, no more data incoming, reply with RST", conn);
 			conn->rdp.state = RDP_CLOSE_WAIT;
 			conn->timestamp = csp_get_ms();
 			csp_rdp_send_cmp(conn, NULL, RDP_ACK | RDP_RST, conn->rdp.snd_nxt, conn->rdp.rcv_cur);
+                        if (CSP_USE_RDP_FAST_CLOSE) {
+                            closed_by |= CSP_RDP_CLOSED_BY_TIMEOUT;
+                        }
 			goto discard_close;
 		}
 
-                csp_log_protocol("RDP %p: RESET out of sequence, keep connection open", conn);
+                csp_log_protocol("RDP %p: RST out of sequence, keep connection open", conn);
 		goto discard_open;
 	}
 
@@ -866,22 +882,22 @@ void csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 discard_close:
 	/* If user-space has received the connection handle, wake it up,
-	 * by sending a NULL pointer, user-space should close connection */
+	 * by sending a NULL pointer, user-space must close connection */
 	if (conn->socket == NULL) {
-		csp_log_protocol("RDP %p: Signal userspace to close", conn);
-		csp_conn_close(conn, CSP_RDP_CLOSE_SOURCE_PROTOCOL);
+            // TODO remove csp_log_protocol("RDP %p: Signal userspace to close", conn);
+		csp_conn_close(conn, closed_by);
 		csp_conn_enqueue_packet(conn, NULL);
 	} else {
-		/* New connection, userspace doesn't know anything about it yet - so it can be completely close */
+		/* New connection, userspace doesn't know anything about it yet - so it can be completely closed */
 		// TODO consider: close protocol should probably only be added in "fast re-use" and possibly
-		csp_log_protocol("RDP %p: closing now", conn);
-		csp_conn_close(conn, CSP_RDP_CLOSE_SOURCE_USERSPACE | CSP_RDP_CLOSE_SOURCE_PROTOCOL);
+            // TODO remove csp_log_protocol("RDP %p: closing now", conn);
+		csp_conn_close(conn, closed_by | CSP_RDP_CLOSED_BY_USERSPACE);
 	}
 
 discard_open:
 	csp_buffer_free(packet);
 accepted_open:
-	return;
+	return close_connection;
 
 }
 
@@ -954,7 +970,7 @@ error:
 int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
 	if (conn->rdp.state != RDP_OPEN) {
-		csp_log_error("RDP %p: ERROR cannot send, connection reset", conn);
+		csp_log_error("RDP %p: ERROR cannot send, connection not open -> reset", conn);
 		return CSP_ERR_RESET;
 	}
 
@@ -967,7 +983,7 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 	}
 
 	if (conn->rdp.state != RDP_OPEN) {
-		csp_log_error("RDP %p: ERROR cannot send, connection reset", conn);
+		csp_log_error("RDP %p: ERROR cannot send, connection not open -> reset", conn);
 		return CSP_ERR_RESET;
 	}
 
@@ -1048,7 +1064,7 @@ int csp_rdp_close(csp_conn_t * conn, uint8_t close_source) {
 	if (conn->rdp.state == RDP_CLOSED)
 		return CSP_ERR_NONE;
 
-        conn->rdp.close_sources |= close_source;
+        conn->rdp.closed_by |= close_source;
 
 	/* If connection is open, send reset */
 	if (conn->rdp.state != RDP_CLOSE_WAIT) {
@@ -1058,18 +1074,22 @@ int csp_rdp_close(csp_conn_t * conn, uint8_t close_source) {
 		csp_log_protocol("RDP %p: csp_rdp_close(0x%x), state %d, sent RST -> CLOSE_WAIT", conn, close_source, conn->rdp.state);
 		csp_bin_sem_post(&conn->rdp.tx_wait); // wake up any pendng Tx
 	}
-        if ((conn->rdp.close_sources & CSP_RDP_CLOSE_SOURCE_USERSPACE) == 0) {
+        if ((conn->rdp.closed_by & CSP_RDP_CLOSED_BY_USERSPACE) == 0) {
             csp_log_protocol("RDP %p: csp_rdp_close(0x%x), waiting for userspace to close", conn, close_source);
             return CSP_ERR_AGAIN;
         }
-        if ((conn->rdp.close_sources & CSP_RDP_CLOSE_SOURCE_PROTOCOL) == 0) {
-            csp_log_protocol("RDP %p: csp_rdp_close(0x%x), waiting for protocol to close/timeout", conn, close_source);
+        if ((conn->rdp.closed_by & CSP_RDP_CLOSED_BY_PROTOCOL) == 0) {
+            csp_log_protocol("RDP %p: csp_rdp_close(0x%x), waiting for protocol to close", conn, close_source);
+            return CSP_ERR_AGAIN;
+        }
+        if ((conn->rdp.closed_by & CSP_RDP_CLOSED_BY_TIMEOUT) == 0) {
+            csp_log_protocol("RDP %p: csp_rdp_close(0x%x), waiting for timeout", conn, close_source);
             return CSP_ERR_AGAIN;
         }
 
         csp_log_protocol("RDP %p: csp_rdp_close(0x%x) -> CLOSED", conn, close_source);
 	conn->rdp.state = RDP_CLOSED;
-        conn->rdp.close_sources = 0;
+        conn->rdp.closed_by = 0;
 	return CSP_ERR_NONE;
 
 }
@@ -1115,8 +1135,8 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 	if (conn == NULL)
 		return;
 
-	printf("\tRDP: State %d (%u), rcv %"PRIu16", snd %"PRIu16", win %"PRIu32"\r\n",
-		conn->rdp.state, conn->rdp.close_sources, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
+	printf("\tRDP: State %d (closed by 0x%x), rcv %"PRIu16", snd %"PRIu16", win %"PRIu32"\r\n",
+		conn->rdp.state, conn->rdp.closed_by, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
 
 }
 #endif

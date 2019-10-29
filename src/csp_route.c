@@ -313,7 +313,10 @@ int csp_route_work(uint32_t timeout) {
 #ifdef CSP_USE_RDP
 	/* Pass packet to RDP module */
 	if (packet->id.flags & CSP_FRDP) {
-		csp_rdp_new_packet(conn, packet);
+		bool close_connection = csp_rdp_new_packet(conn, packet);
+		if (close_connection) {
+			csp_close(conn);
+		}
 		return 0;
 	}
 #endif
