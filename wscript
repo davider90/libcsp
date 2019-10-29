@@ -39,6 +39,7 @@ def options(ctx):
     gr.add_option('--disable-output', action='store_true', help='Disable CSP output')
     gr.add_option('--disable-stlib', action='store_true', help='Build objects only')
     gr.add_option('--enable-rdp', action='store_true', help='Enable RDP support')
+    gr.add_option('--enable-rdp-fast-close', action='store_true', help='Enable fast close of RDP connections')
     gr.add_option('--enable-qos', action='store_true', help='Enable Quality of Service support')
     gr.add_option('--enable-promisc', action='store_true', help='Enable promiscuous mode support')
     gr.add_option('--enable-crc32', action='store_true', help='Enable CRC32 support')
@@ -196,6 +197,7 @@ def configure(ctx):
 
     ctx.define_cond('CSP_DEBUG', not ctx.options.disable_output)
     ctx.define_cond('CSP_USE_RDP', ctx.options.enable_rdp)
+    ctx.define_cond('CSP_USE_RDP_FAST_CLOSE', ctx.options.enable_rdp and ctx.options.enable_rdp_fast_close)
     ctx.define_cond('CSP_USE_CRC32', ctx.options.enable_crc32)
     ctx.define_cond('CSP_USE_HMAC', ctx.options.enable_hmac)
     ctx.define_cond('CSP_USE_XTEA', ctx.options.enable_xtea)

@@ -87,7 +87,7 @@ int csp_rtable_set(uint8_t node, uint8_t mask, csp_iface_t *ifc, uint8_t mac);
 
 /**
    Save routing table as a string (readable format).
-   @see csp_rtable_load() additional information.
+   @see csp_rtable_load() for additional information.
    @param[out] buffer user supplied buffer.
    @param[in] buffer_size size of \a buffer.
    @return length of saved string  TODO error ?
@@ -97,9 +97,9 @@ int csp_rtable_save(char * buffer, int buffer_size); // TODO size_t ??
 /**
    Load routing table from a string.
    Table will be loaded on-top of existing routes, possibly overwriting existing entries.
-   Format: \<address\>/\<mask\> \<interface\> [mac][, next entry]
-   Example: "0/0 I2C 8, 8/2 KISS"
-   @see csp_rtable_clear(), csp_rtable_free()
+   Format: \<address\>[/mask] \<interface\> [mac][, next entry]
+   Example: "0/0 CAN, 8 KISS, 10 I2C 10"
+   @see csp_rtable_save(), csp_rtable_clear(), csp_rtable_free()
    @param[in] rtable routing table (nul terminated)
    @return @ref CSP_ERR or number of entries.
 */
