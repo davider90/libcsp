@@ -32,41 +32,43 @@ static int csp_rtable_parse(const char * rtable, int dry_run) {
 	int valid_entries = 0;
 
 	/* Copy string before running strtok */
-        const size_t str_len = strlen(rtable) + 1;
-	char * str = alloca(str_len);
-	memcpy(str, rtable, str_len);
+	const size_t str_len = strnlen(rtable, 100);
+	char rtable_copy[str_len + 1];
+	strncpy(rtable_copy, rtable, str_len);
+	rtable_copy[str_len] = 0;        
 
 	/* Get first token */
-        char * saveptr;
-	str = strtok_r(str, ",", &saveptr);
+	char * saveptr;
+	char * str = strtok_r(rtable_copy, ",", &saveptr);
 	while ((str) && (strlen(str) > 1)) {
-		unsigned int address = 0, netmask = 0, mac = CSP_NODE_MAC;
-		char name[15] = {};
+		unsigned int address, netmask, mac;
+		char name[15];
 		if (sscanf(str, "%u/%u %14s %u", &address, &netmask, name, &mac) == 4) {
-                } else if (sscanf(str, "%u/%u %14s", &address, &netmask, name) == 3) {
-                    mac = CSP_NODE_MAC;
-                } else if (sscanf(str, "%u %14s %u", &address, name, &mac) == 3) {
-                    netmask = CSP_ID_HOST_SIZE;
-                } else if (sscanf(str, "%u %14s", &address, name) == 3) {
-                    netmask = CSP_ID_HOST_SIZE;
-                    mac = CSP_NODE_MAC;
-                } else {
-                    csp_log_error("%s: parse error [%s]", __FUNCTION__, str);
-                    return -1;
-                }
+		} else if (sscanf(str, "%u/%u %14s", &address, &netmask, name) == 3) {
+			mac = CSP_NODE_MAC;
+		} else if (sscanf(str, "%u %14s %u", &address, name, &mac) == 3) {
+			netmask = CSP_ID_HOST_SIZE;
+		} else if (sscanf(str, "%u %14s", &address, name) == 2) {
+			netmask = CSP_ID_HOST_SIZE;
+			mac = CSP_NODE_MAC;
+		} else {
+			// invalid entry
+			name[0] = 0;
+		}
+		name[sizeof(name) - 1] = 0;
 
-		//printf("Parsed %u/%u %u %s\r\n", address, netmask, mac, name);
 		csp_iface_t * ifc = csp_iflist_get_by_name(name);
-                if (ifc == NULL) {
-                    csp_log_error("%s: unknown interface [%s] in [%s]", __FUNCTION__, name, str);
-                    return -1;
-                }
-                if (dry_run == 0) {
-                    int res = csp_rtable_set(address, netmask, ifc, mac);
-                    if (res != CSP_ERR_NONE) {
-                        csp_log_error("%s: failed to add [%s], error: %d", __FUNCTION__, str, res);
-                        return -1;
-                    }
+		if ((address > CSP_ID_HOST_MAX) || (netmask > CSP_ID_HOST_SIZE) || (mac > UINT8_MAX) || (ifc == NULL))  {
+			csp_log_error("%s: invalid entry [%s]", __FUNCTION__, str);
+			return CSP_ERR_INVAL;
+		}
+
+		if (dry_run == 0) {
+			int res = csp_rtable_set(address, netmask, ifc, mac);
+			if (res != CSP_ERR_NONE) {
+				csp_log_error("%s: failed to add [%s], error: %d", __FUNCTION__, str, res);
+				return res;
+			}
 		}
 		valid_entries++;
 		str = strtok_r(NULL, ",", &saveptr);
@@ -92,7 +94,7 @@ int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t m
 	}
 
 	/* Validates options */
-	if (((address > CSP_ID_HOST_MAX) && (address != 255)) || (ifc == NULL) || (ifc->nexthop == NULL) || (netmask > CSP_ID_HOST_SIZE)) {
+	if (((address > CSP_ID_HOST_MAX) && (address != 255)) || (ifc == NULL) || (netmask > CSP_ID_HOST_SIZE)) {
 		csp_log_error("%s: invalid route: address %u, netmask %u, interface %p (%s), mac %u",
                               __FUNCTION__, address, netmask, ifc, (ifc != NULL) ? ifc->name : "", mac);
 		return CSP_ERR_INVAL;
@@ -103,8 +105,9 @@ int csp_rtable_set(uint8_t address, uint8_t netmask, csp_iface_t *ifc, uint8_t m
 
 typedef struct {
     char * buffer;
-    int len;
-    int maxlen;
+    size_t len;
+    size_t maxlen;
+    int error;
 } csp_rtable_save_ctx_t;
 
 static bool csp_rtable_save_route(void * vctx, uint8_t address, uint8_t mask, const csp_rtable_route_t * route)
@@ -130,17 +133,23 @@ static bool csp_rtable_save_route(void * vctx, uint8_t address, uint8_t mask, co
     } else {
         mac_str[0] = 0;
     }
-    ctx->len += snprintf(ctx->buffer + ctx->len, ctx->maxlen - ctx->len,
-                         "%s%u%s %s%s", sep, address, mask_str, route->interface->name, mac_str);
+    size_t remain_buf_size = ctx->maxlen - ctx->len;
+    int res = snprintf(ctx->buffer + ctx->len, remain_buf_size,
+                       "%s%u%s %s%s", sep, address, mask_str, route->interface->name, mac_str);
+    if ((res < 0) || (res >= (int)(remain_buf_size))) {
+        ctx->error = CSP_ERR_NOMEM;
+        return false;
+    }
+    ctx->len += res;
     return true;
 }
 
-int csp_rtable_save(char * buffer, int maxlen)
+int csp_rtable_save(char * buffer, size_t maxlen)
 {
-    csp_rtable_save_ctx_t ctx = {.len = 0, .buffer = buffer, .maxlen = maxlen};
+    csp_rtable_save_ctx_t ctx = {.len = 0, .buffer = buffer, .maxlen = maxlen, .error = CSP_ERR_NONE};
+    buffer[0] = 0;
     csp_rtable_iterate(csp_rtable_save_route, &ctx);
-    // TODO error handling
-    return ctx.len;
+    return ctx.error;
 }
 
 void csp_rtable_clear(void) {
