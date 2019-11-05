@@ -28,15 +28,13 @@ def usage():
 
 
 def main():
-    try:
-        hdr = sys.argv[1]
-    except:
+    if len(sys.argv) != 2:
         usage()
         sys.exit(-1)
 
     try:
-        hdrhex = int(hdr, 16)
-    except:
+        hdrhex = int(sys.argv[1], 16)
+    except Exception:
         print("HEADER must be in hexadecimal format")
         sys.exit(-1)
 
