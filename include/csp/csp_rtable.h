@@ -87,12 +87,12 @@ int csp_rtable_set(uint8_t node, uint8_t mask, csp_iface_t *ifc, uint8_t mac);
 
 /**
    Save routing table as a string (readable format).
-   @see csp_rtable_load() for additional information.
+   @see csp_rtable_load() for additional information, e.g. format.
    @param[out] buffer user supplied buffer.
    @param[in] buffer_size size of \a buffer.
-   @return length of saved string  TODO error ?
+   @return #CSP_ERR_NONE on success, or an error code.
 */
-int csp_rtable_save(char * buffer, int buffer_size); // TODO size_t ??
+int csp_rtable_save(char * buffer, size_t buffer_size);
 
 /**
    Load routing table from a string.
