@@ -518,7 +518,6 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	 */
 	if (conn->rdp.state == RDP_CLOSE_WAIT) {
 		if (csp_rdp_time_after(time_now, conn->timestamp + conn->rdp.conn_timeout)) {
-                    // TODO remove csp_log_protocol("RDP %p: CLOSE_WAIT timeout, closing", conn);
 			csp_conn_close(conn, CSP_RDP_CLOSED_BY_TIMEOUT);
 		}
 		return;
@@ -570,7 +569,7 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	}
 
 	if (conn->rdp.state == RDP_OPEN) {
-            // TODO Jira: libgscsp-55 is this correct according to protocol? During connection creationm the ack's from csp_rdp_check_ack() causes failure
+            // TODO Jira: libgscsp-55 is this correct according to protocol? During connection creation the ack's from csp_rdp_check_ack() causes failure
 		/**
 		 * ACK TIMEOUT:
 		 * Check ACK timeouts, if we have unacknowledged segments
@@ -626,8 +625,6 @@ bool csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 			}
 			goto discard_close;
 		}
-
-		// TODO remove csp_log_protocol("RDP %p: Got RST in state %u", conn, conn->rdp.state);
 
 		if (rx_header->seq_nr == (conn->rdp.rcv_cur + 1)) {
 			csp_log_protocol("RDP %p: Received RST in sequence, no more data incoming, reply with RST", conn);
@@ -889,13 +886,10 @@ discard_close:
 	/* If user-space has received the connection handle, wake it up,
 	 * by sending a NULL pointer, user-space must close connection */
 	if (conn->socket == NULL) {
-            // TODO remove csp_log_protocol("RDP %p: Signal userspace to close", conn);
 		csp_conn_close(conn, closed_by);
 		csp_conn_enqueue_packet(conn, NULL);
 	} else {
 		/* New connection, userspace doesn't know anything about it yet - so it can be completely closed */
-		// TODO consider: close protocol should probably only be added in "fast re-use" and possibly
-            // TODO remove csp_log_protocol("RDP %p: closing now", conn);
 		csp_conn_close(conn, closed_by | CSP_RDP_CLOSED_BY_USERSPACE);
 	}
 
