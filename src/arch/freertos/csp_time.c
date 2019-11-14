@@ -18,15 +18,6 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdint.h>
-
-/* FreeRTOS includes */
-#include <FreeRTOS.h>
-#include <task.h>
-
-/* CSP includes */
-#include <csp/csp.h>
-
 #include <csp/arch/csp_time.h>
 
 uint32_t csp_get_ms(void) {

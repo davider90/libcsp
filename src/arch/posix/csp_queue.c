@@ -18,15 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdint.h>
-#include <pthread.h>
-
-/* CSP includes */
-#include <csp/csp.h>
-
-#include <csp/arch/posix/pthread_queue.h>
 #include <csp/arch/csp_queue.h>
-
+#include <csp/arch/posix/pthread_queue.h>
 
 csp_queue_handle_t csp_queue_create(int length, size_t item_size) {
 	return pthread_queue_create(length, item_size);
