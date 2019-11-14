@@ -43,8 +43,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../csp_init.h"
 #include "csp_transport.h"
 
-#ifdef CSP_USE_RDP
-
 #define RDP_SYN	0x01
 #define RDP_ACK 0x02
 #define RDP_EAK 0x04
@@ -65,9 +63,9 @@ typedef struct {
 	uint32_t quarantine;	// EACK quarantine period (-> csp_packet_t.padding)
 	uint32_t timestamp;	// Time the message was sent (-> csp_packet_t.padding)
 	uint8_t padding[CSP_PADDING_BYTES - (2 * sizeof(uint32_t))];
-	uint16_t length;	// Length field must be just before CSP ID
-	csp_id_t id;		// CSP id must be just before data
-	uint8_t data[];		// This just points to the rest of the buffer, without a size indication.
+	uint16_t length;	// Overlay length member in csp_packet_t
+	csp_id_t id;		// Overlay id member in csp_packet_t
+	uint8_t data[];		// Overlay data member in csp_packet_t
 } rdp_packet_t;
 
 // Ensure certain fields in the rdp_packet_t matches the fields in the csp_packet_t
@@ -569,16 +567,13 @@ void csp_rdp_check_timeouts(csp_conn_t * conn) {
 	}
 
 	if (conn->rdp.state == RDP_OPEN) {
-            // TODO Jira: libgscsp-55 is this correct according to protocol? During connection creation the ack's from csp_rdp_check_ack() causes failure
-		/**
-		 * ACK TIMEOUT:
-		 * Check ACK timeouts, if we have unacknowledged segments
-		 */
+
+		/* Check if we have unacknowledged segments */
 		if (conn->rdp.delayed_acks) {
 			csp_rdp_check_ack(conn);
 		}
 
-		/* Wake user task if connection is open and additional Tx can be done */
+		/* Wake user task if additional Tx can be done */
 		if (csp_rdp_is_conn_ready_for_tx(conn)) {
 			csp_log_protocol("RDP %p: Wake Tx task (check timeouts)", conn);
 			csp_bin_sem_post(&conn->rdp.tx_wait);
@@ -612,7 +607,7 @@ bool csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		}
 
 		if (conn->rdp.state == RDP_CLOSED) {
-			csp_log_protocol("RDP %p: RST received in CLOSED - ignore", conn);
+			csp_log_protocol("RDP %p: RST received in CLOSED - ignored", conn);
 			close_connection = (conn->socket != NULL);
 			goto discard_open;
                 }
@@ -759,9 +754,9 @@ bool csp_rdp_new_packet(csp_conn_t * conn, csp_packet_t * packet) {
 		}
 
 		/* Check sequence number */
-		if (!csp_rdp_seq_between(rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + conn->rdp.window_size * 2)) {
+		if (!csp_rdp_seq_between(rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + (conn->rdp.window_size * 2))) {
 			csp_log_protocol("RDP %p: Invalid sequence number! %"PRIu16" not between %"PRIu16" and %"PRIu32,
-				conn, rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + 1 + conn->rdp.window_size * 2);
+				conn, rx_header->seq_nr, conn->rdp.rcv_cur + 1, conn->rdp.rcv_cur + (conn->rdp.window_size * 2));
 			/* If duplicate SYN received, send another SYN/ACK */
 			if (conn->rdp.state == RDP_SYN_RCVD)
 				csp_rdp_send_cmp(conn, NULL, RDP_ACK | RDP_SYN, conn->rdp.snd_iss, conn->rdp.rcv_irs);
@@ -904,11 +899,11 @@ int csp_rdp_connect(csp_conn_t * conn, uint32_t timeout) {
 
 	int retry = 1;
 
-	conn->rdp.window_size	 = csp_rdp_window_size;
-	conn->rdp.conn_timeout	= csp_rdp_conn_timeout;
+	conn->rdp.window_size     = csp_rdp_window_size;
+	conn->rdp.conn_timeout    = csp_rdp_conn_timeout;
 	conn->rdp.packet_timeout  = csp_rdp_packet_timeout;
-	conn->rdp.delayed_acks	= csp_rdp_delayed_acks;
-	conn->rdp.ack_timeout 	  = csp_rdp_ack_timeout;
+	conn->rdp.delayed_acks    = csp_rdp_delayed_acks;
+	conn->rdp.ack_timeout     = csp_rdp_ack_timeout;
 	conn->rdp.ack_delay_count = csp_rdp_ack_delay_count;
 	conn->rdp.ack_timestamp   = csp_get_ms();
 
@@ -1140,5 +1135,3 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 
 }
 #endif
-
-#endif // CSP_USE_RDP
