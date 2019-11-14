@@ -110,7 +110,7 @@ csp_socket_t *csp_socket(uint32_t opts);
 /**
  * Wait for a new connection on a socket created by csp_socket
  * @param socket Socket to accept connections on
- * @param timeout use CSP_MAX_DELAY for infinite timeout
+ * @param timeout timeout in mS, use #CSP_MAX_TIMEOUT for infinite timeout.
  * @return New connection on success, NULL on failure or timeout.
  */
 csp_conn_t *csp_accept(csp_socket_t *socket, uint32_t timeout);
@@ -122,7 +122,7 @@ csp_conn_t *csp_accept(csp_socket_t *socket, uint32_t timeout);
  * The call will block.
  * Do NOT call this from ISR
  * @param conn pointer to connection
- * @param timeout timeout in ms, use CSP_MAX_DELAY for infinite blocking time
+ * @param timeout timeout in mS, use #CSP_MAX_TIMEOUT for infinite timeout.
  * @return Packet or NULL in case of failure or timeout.
  */
 csp_packet_t *csp_read(csp_conn_t *conn, uint32_t timeout);
@@ -204,7 +204,7 @@ int csp_transaction_persistent(csp_conn_t *conn, uint32_t timeout, void *outbuf,
  * If no packet is available and a timeout has been specified the call will block.
  * Do NOT call this from ISR
  * @param socket connection-less socket.
- * @param timeout timeout in ms, use CSP_MAX_DELAY for infinite blocking time
+ * @param timeout timeout in mS, use #CSP_MAX_TIMEOUT for infinite timeout.
  * @return Packet or NULL in case of failure or timeout.
  */
 csp_packet_t *csp_recvfrom(csp_socket_t *socket, uint32_t timeout);

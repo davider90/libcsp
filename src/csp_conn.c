@@ -18,25 +18,16 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "csp_conn.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-
-/* CSP includes */
 #include <csp/csp.h>
-#include <csp/csp_error.h>
-
-#include <csp/arch/csp_thread.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_semaphore.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_time.h>
-
 #include "csp_init.h"
 #include "transport/csp_transport.h"
-
-#include "csp_conn.h"
 
 /* Connection pool */
 static csp_conn_t * arr_conn;
@@ -44,7 +35,7 @@ static csp_conn_t * arr_conn;
 /* Connection pool lock */
 static csp_bin_sem_handle_t conn_lock;
 
-/* Source port */
+/* Last used 'source' port */
 static uint8_t sport;
 
 /* Source port lock */
@@ -102,14 +93,14 @@ int csp_conn_enqueue_packet(csp_conn_t * conn, csp_packet_t * packet) {
 
 int csp_conn_init(void) {
 
-	arr_conn = csp_calloc(sizeof(*arr_conn), csp_conf.conn_max);
+	arr_conn = csp_calloc(csp_conf.conn_max, sizeof(*arr_conn));
 	if (arr_conn == NULL) {
-		csp_log_error("No more memory for %u connections", csp_conf.conn_max);
+		csp_log_error("Allocation for %u connections failed", csp_conf.conn_max);
 		return CSP_ERR_NOMEM;
 	}
 
 	if (csp_bin_sem_create(&conn_lock) != CSP_SEMAPHORE_OK) {
-		csp_log_error("No memory for connection lock");
+		csp_log_error("csp_bin_sem_create(&conn_lock) failed");
 		return CSP_ERR_NOMEM;
 	}
 
@@ -118,23 +109,31 @@ int csp_conn_init(void) {
 	sport = (rand() % (CSP_ID_PORT_MAX - csp_conf.port_max_bind)) + (csp_conf.port_max_bind + 1);
 
 	if (csp_bin_sem_create(&sport_lock) != CSP_SEMAPHORE_OK) {
-		csp_log_error("No memory for source port lock");
+		csp_log_error("csp_bin_sem_create(&sport_lock) failed");
 		return CSP_ERR_NOMEM;
 	}
 
 	for (int i = 0; i < csp_conf.conn_max; i++) {
+		csp_conn_t * conn = &arr_conn[i];
 		for (int prio = 0; prio < CSP_RX_QUEUES; prio++) {
-			arr_conn[i].rx_queue[prio] = csp_queue_create(csp_conf.conn_queue_length, sizeof(csp_packet_t *));
+			conn->rx_queue[prio] = csp_queue_create(csp_conf.conn_queue_length, sizeof(csp_packet_t *));
+			if (conn->rx_queue[prio] == NULL) {
+				csp_log_error("rx_queue = csp_queue_create() failed");
+				return CSP_ERR_NOMEM;
+			}
 		}
 
 #ifdef CSP_USE_QOS
-		arr_conn[i].rx_event = csp_queue_create(csp_conf.conn_queue_length, sizeof(int));
+		conn->rx_event = csp_queue_create(csp_conf.conn_queue_length, sizeof(int));
+		if (conn->rx_event == NULL) {
+			csp_log_error("rx_event = csp_queue_create() failed");
+			return CSP_ERR_NOMEM;
+		}
 #endif
-		arr_conn[i].state = CONN_CLOSED;
 
 #ifdef CSP_USE_RDP
-		if (csp_rdp_allocate(&arr_conn[i]) != CSP_ERR_NONE) {
-			csp_log_error("Failed to init connection for RDP");
+		if (csp_rdp_allocate(conn) != CSP_ERR_NONE) {
+			csp_log_error("csp_rdp_allocate(conn) failed");
 			return CSP_ERR_NOMEM;
 		}
 #endif
@@ -186,7 +185,7 @@ csp_conn_t * csp_conn_allocate(csp_conn_type_t type) {
 
 	static uint8_t csp_conn_last_given = 0;
 
-	if (csp_bin_sem_wait(&conn_lock, 100) != CSP_SEMAPHORE_OK) {
+	if (csp_bin_sem_wait(&conn_lock, CSP_MAX_TIMEOUT) != CSP_SEMAPHORE_OK) {
 		csp_log_error("Failed to lock conn array");
 		return NULL;
 	}
@@ -270,7 +269,7 @@ int csp_conn_close(csp_conn_t * conn, uint8_t closed_by) {
 #endif
 
 	/* Lock connection array while closing connection */
-	if (csp_bin_sem_wait(&conn_lock, 100) != CSP_SEMAPHORE_OK) {
+	if (csp_bin_sem_wait(&conn_lock, CSP_MAX_TIMEOUT) != CSP_SEMAPHORE_OK) {
 		csp_log_error("Failed to lock conn array");
 		return CSP_ERR_TIMEDOUT;
 	}
@@ -366,7 +365,7 @@ csp_conn_t * csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t tim
 	csp_conn_t * conn = NULL;
 
 	/* Wait for sport lock - note that csp_conn_new(..) is called inside the lock! */
-	if (csp_bin_sem_wait(&sport_lock, 1000) != CSP_SEMAPHORE_OK) {
+	if (csp_bin_sem_wait(&sport_lock, CSP_MAX_TIMEOUT) != CSP_SEMAPHORE_OK) {
 		return NULL;
 	}
 

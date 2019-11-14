@@ -18,16 +18,9 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdint.h>
-
-/* FreeRTOS includes */
+#include <csp/arch/csp_queue.h>
 #include <FreeRTOS.h>
 #include <queue.h>
-
-/* CSP includes */
-#include <csp/csp.h>
-
-#include <csp/arch/csp_queue.h>
 
 csp_queue_handle_t csp_queue_create(int length, size_t item_size) {
 	return xQueueCreate(length, item_size);
@@ -38,7 +31,7 @@ void csp_queue_remove(csp_queue_handle_t queue) {
 }
 
 int csp_queue_enqueue(csp_queue_handle_t handle, const void * value, uint32_t timeout) {
-	if (timeout != CSP_MAX_DELAY)
+	if (timeout != CSP_MAX_TIMEOUT)
 		timeout = timeout / portTICK_RATE_MS;
 	return xQueueSendToBack(handle, value, timeout);
 }
@@ -48,7 +41,7 @@ int csp_queue_enqueue_isr(csp_queue_handle_t handle, const void * value, CSP_BAS
 }
 
 int csp_queue_dequeue(csp_queue_handle_t handle, void * buf, uint32_t timeout) {
-	if (timeout != CSP_MAX_DELAY)
+	if (timeout != CSP_MAX_TIMEOUT)
 		timeout = timeout / portTICK_RATE_MS;
 	return xQueueReceive(handle, buf, timeout);
 }
