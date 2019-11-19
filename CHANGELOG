@@ -10,6 +10,7 @@ libcsp 1.6, DD-MM-YYYY
 - RDP: always keep connection in CLOSE_WAIT for period of time. In some cases, the connection would switch to CLOSED immediately.
 - RDP: fixed connection leak. If a RST segment was received on a closed connecton, a connection would semi created and never released.
 - RDP: ensure connection is closed from both userspace and protocol, before closing. Multiple calls to csp_close() would close connection, even if userspace still had it open, causing undetermined behaviour.
+- ZMQ/csp_bridge: added support for transfering MAC (via) address.
 
 libcsp 1.5, 21-08-2018
 ----------------------

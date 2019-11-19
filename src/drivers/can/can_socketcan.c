@@ -68,9 +68,13 @@ static void * socketcan_rx_thread(void * arg)
 			continue;
 		}
 
-		/* Frame type */
-		if (frame.can_id & (CAN_ERR_FLAG | CAN_RTR_FLAG) || !(frame.can_id & CAN_EFF_FLAG)) {
-			/* Drop error and remote frames */
+		/* Drop frames with standard id (CSP uses extended) */
+		if (!(frame.can_id & CAN_EFF_FLAG)) {
+			continue;
+		}
+
+		/* Drop error and remote frames */
+		if (frame.can_id & (CAN_ERR_FLAG | CAN_RTR_FLAG)) {
 			csp_log_warn("%s: discarding ERR/RTR/SFF frame", __FUNCTION__);
 			continue;
 		}
