@@ -34,6 +34,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define CSP_ZMQ_MTU   1024   // max payload data, see documentation
 
+// Ensure certain fields in the zmqhub_csp_packet_t matches the fields in the csp_packet_t
+CSP_STATIC_ASSERT(offsetof(csp_zmqhub_csp_packet_t, length) == offsetof(csp_packet_t, length), length_field_misaligned);
+CSP_STATIC_ASSERT(offsetof(csp_zmqhub_csp_packet_t, id) == offsetof(csp_packet_t, id), id_field_misaligned);
+
 /* ZMQ driver & interface */
 typedef struct {
 	csp_thread_handle_t rx_thread;
@@ -98,7 +102,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		}
 
 		/* Create new csp packet */
-		csp_packet_t * packet = csp_buffer_get(datalen); // a CSP buffer has size of 'payload' + CSP_BUFFER_PACKET_OVERHEAD
+		csp_packet_t * packet = csp_buffer_get(datalen);
 		if (packet == NULL) {
 			csp_log_warn("RX %s: Failed to get csp_buffer(%u)", drv->interface.name, datalen);
 			zmq_msg_close(&msg);
@@ -106,9 +110,14 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		}
 
 		/* Copy the data from zmq to csp */
-		uint8_t * destptr = ((uint8_t *) &packet->id) - sizeof(*destptr);
-		memcpy(destptr, zmq_msg_data(&msg), datalen);
-		packet->length = datalen - sizeof(packet->id) - sizeof(*destptr);
+		const uint8_t * rx_data = zmq_msg_data(&msg);
+		// First byte is the MAC (via) address.
+		((csp_zmqhub_csp_packet_t*)(packet))->mac = *rx_data;
+		++rx_data;
+		--datalen;
+		// Remaining is CSP header and payload
+		memcpy(&packet->id, rx_data, datalen);
+		packet->length = datalen - sizeof(packet->id);
 
 		/* Queue up packet to router */
 		csp_qfifo_write(packet, &drv->interface, NULL);
