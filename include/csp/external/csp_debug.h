@@ -2,6 +2,12 @@
 #ifndef GS_CSP_EXTERNAL_CSP_DEBUG_H
 #define GS_CSP_EXTERNAL_CSP_DEBUG_H
 
+/**
+   Hook into GomSpace log system.
+
+   Not part of standard libcsp.
+*/
+
 #include <gs/util/log/log.h>
 
 #ifdef __cplusplus

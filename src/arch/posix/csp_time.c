@@ -19,6 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/arch/csp_time.h>
+#include <time.h>
+#include <sys/time.h>
+#include <limits.h>
 
 uint32_t csp_get_ms(void) {
 	struct timespec ts;

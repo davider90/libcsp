@@ -23,10 +23,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /**
    @file
 
-   CSP/ZMQ (ZeroMQ) interface.
+   ZMQ (ZeroMQ) interface.
 
-   The CSP/ZMQ interface is designed to connect to a ZMQ hub, also refered to as \a zmqproxy. The zmqproxy is currently not included
-   in libcsp, but is based on zmq_proxy() - provided by the ZMQ API.
+   The ZMQ interface is designed to connect to a ZMQ hub, also refered to as \a zmqproxy. The zmqproxy can be found under examples,
+   and is based on zmq_proxy() - provided by the ZMQ API.
 
    For further details on ZMQ, see http://www.zeromq.org.
 */

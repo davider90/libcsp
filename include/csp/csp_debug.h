@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 /**
    @file
-   CSP debug and log.
+   Debug and log.
 */
 
 #include <csp/csp_types.h>
