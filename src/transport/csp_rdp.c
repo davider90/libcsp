@@ -106,20 +106,24 @@ static int csp_rdp_close_internal(csp_conn_t * conn, uint8_t closed_by, bool sen
  * information that needs to be appended to all data packets.
  */
 static rdp_header_t * csp_rdp_header_add(csp_packet_t * packet) {
-	rdp_header_t * header = (rdp_header_t *) &packet->data[packet->length];
-	packet->length += sizeof(rdp_header_t);
-	memset(header, 0, sizeof(rdp_header_t));
+	rdp_header_t * header;
+	if ((packet->length + sizeof(*header)) > csp_buffer_data_size()) {
+		return NULL;
+	}
+	header = (rdp_header_t *) &packet->data[packet->length];
+	packet->length += sizeof(*header);
+	memset(header, 0, sizeof(*header));
 	return header;
 }
 
 static rdp_header_t * csp_rdp_header_remove(csp_packet_t * packet) {
-	rdp_header_t * header = (rdp_header_t *) &packet->data[packet->length-sizeof(rdp_header_t)];
-	packet->length -= sizeof(rdp_header_t);
+	rdp_header_t * header = (rdp_header_t *) &packet->data[packet->length - sizeof(*header)];
+	packet->length -= sizeof(*header);
 	return header;
 }
 
 static rdp_header_t * csp_rdp_header_ref(csp_packet_t * packet) {
-	rdp_header_t * header = (rdp_header_t *) &packet->data[packet->length-sizeof(rdp_header_t)];
+	rdp_header_t * header = (rdp_header_t *) &packet->data[packet->length - sizeof(*header)];
 	return header;
 }
 
@@ -162,8 +166,6 @@ static inline int csp_rdp_time_after(uint32_t time, uint32_t cmp) {
  */
 static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags, int seq_nr, int ack_nr) {
 
-	csp_id_t idout;
-
 	/* Generate message */
 	if (!packet) {
 		packet = csp_buffer_get(20);
@@ -174,6 +176,11 @@ static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags,
 
 	/* Add RDP header */
 	rdp_header_t * header = csp_rdp_header_add(packet);
+	if (header == NULL) {
+		csp_log_error("RDP %p: No space for RDP header (cmp)", conn);
+		csp_buffer_free(packet);
+		return CSP_ERR_NOMEM;
+	}
 	header->seq_nr = csp_hton16(seq_nr);
 	header->ack_nr = csp_hton16(ack_nr);
 	header->ack = (flags & RDP_ACK) ? 1 : 0;
@@ -191,7 +198,7 @@ static int csp_rdp_send_cmp(csp_conn_t * conn, csp_packet_t * packet, int flags,
 	}
 
 	/* Send control messages with high priority */
-	idout = conn->idout;
+	csp_id_t idout = conn->idout;
 	idout.pri = conn->idout.pri < CSP_PRIO_HIGH ? conn->idout.pri : CSP_PRIO_HIGH;
 
 	csp_log_protocol("RDP %p: Send CMP S %u: syn %u, ack %u, eack %u, rst %u, seq_nr %5u, ack_nr %5u, packet_len %u (%u)",
@@ -461,8 +468,8 @@ void csp_rdp_flush_all(csp_conn_t * conn) {
 int csp_rdp_check_ack(csp_conn_t * conn) {
 
 	/* Check all RX queues for spare capacity */
-	int prio, avail = 1;
-	for (prio = 0; prio < CSP_RX_QUEUES; prio++) {
+	int avail = 1;
+	for (int prio = 0; prio < CSP_RX_QUEUES; prio++) {
 		if (csp_conf.conn_queue_length - csp_queue_size(conn->rx_queue[prio]) <= 2 * (int32_t)conn->rdp.window_size) {
 			avail = 0;
 			break;
@@ -961,7 +968,7 @@ error:
 int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
 	if (conn->rdp.state != RDP_OPEN) {
-		csp_log_error("RDP %p: ERROR cannot send, connection not open (%d) -> reset", conn, conn->rdp.state);
+		csp_log_error("RDP %p: ERROR cannot send, connection not open (%d)", conn, conn->rdp.state);
 		return CSP_ERR_RESET;
 	}
 
@@ -980,6 +987,10 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
 	/* Add RDP header */
 	rdp_header_t * tx_header = csp_rdp_header_add(packet);
+	if (tx_header == NULL) {
+		csp_log_error("RDP %p: No space for RDP header (send)", conn);
+		return CSP_ERR_NOMEM;
+        }
 	tx_header->ack_nr = csp_hton16(conn->rdp.rcv_cur);
 	tx_header->seq_nr = csp_hton16(conn->rdp.snd_nxt);
 	tx_header->ack = 1;

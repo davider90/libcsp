@@ -18,37 +18,28 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "csp_io.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-
-/* CSP includes */
 #include <csp/csp.h>
-#include <csp/csp_error.h>
 #include <csp/csp_endian.h>
 #include <csp/csp_crc32.h>
 #include <csp/csp_rtable.h>
 #include <csp/interfaces/csp_if_lo.h>
-
 #include <csp/arch/csp_thread.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_semaphore.h>
 #include <csp/arch/csp_time.h>
-#include <csp/arch/csp_malloc.h>
-
 #include <csp/crypto/csp_hmac.h>
 #include <csp/crypto/csp_xtea.h>
-
 #include "csp_init.h"
 #include "csp_port.h"
 #include "csp_conn.h"
-#include "csp_route.h"
 #include "csp_promisc.h"
 #include "csp_qfifo.h"
 #include "transport/csp_transport.h"
-
-#include "csp_io.h"
 
 #ifdef CSP_USE_PROMISC
 extern csp_queue_handle_t csp_promisc_queue;
@@ -194,7 +185,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 		if (idout.flags & CSP_FHMAC) {
 #ifdef CSP_USE_HMAC
 			/* Calculate and add HMAC (does not include header for backwards compatability with csp1.x) */
-			if (csp_hmac_append(packet, false) != 0) {
+			if (csp_hmac_append(packet, false) != CSP_ERR_NONE) {
 				/* HMAC append failed */
 				csp_log_warn("HMAC append failed!");
 				goto tx_err;
@@ -209,7 +200,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 		if (idout.flags & CSP_FCRC32) {
 #ifdef CSP_USE_CRC32
 			/* Calculate and add CRC32 (does not include header for backwards compatability with csp1.x) */
-			if (csp_crc32_append(packet, false) != 0) {
+			if (csp_crc32_append(packet, false) != CSP_ERR_NONE) {
 				/* CRC32 append failed */
 				csp_log_warn("CRC32 append failed!");
 				goto tx_err;
@@ -222,23 +213,12 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 
 		if (idout.flags & CSP_FXTEA) {
 #ifdef CSP_USE_XTEA
-			/* Create nonce */
-			uint32_t nonce, nonce_n;
-			nonce = (uint32_t)rand();
-			nonce_n = csp_hton32(nonce);
-			memcpy(&packet->data[packet->length], &nonce_n, sizeof(nonce_n));
-
-			/* Create initialization vector */
-			uint32_t iv[2] = {nonce, 1};
-
 			/* Encrypt data */
-			if (csp_xtea_encrypt(packet->data, packet->length, iv) != 0) {
+			if (csp_xtea_encrypt_packet(packet) != CSP_ERR_NONE) {
 				/* Encryption failed */
-				csp_log_warn("Encryption failed! Discarding packet");
+				csp_log_warn("XTEA Encryption failed!");
 				goto tx_err;
 			}
-
-			packet->length += sizeof(nonce_n);
 #else
 			csp_log_warn("Attempt to send XTEA encrypted packet, but CSP was compiled without XTEA support. Discarding packet");
 			goto tx_err;
@@ -269,8 +249,6 @@ err:
 
 int csp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
-	int ret;
-
 	if ((conn == NULL) || (packet == NULL) || (conn->state != CONN_OPEN)) {
 		csp_log_error("Invalid call to csp_send");
 		return 0;
@@ -279,16 +257,12 @@ int csp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 #ifdef CSP_USE_RDP
 	if (conn->idout.flags & CSP_FRDP) {
 		if (csp_rdp_send(conn, packet, timeout) != CSP_ERR_NONE) {
-			csp_iface_t * ifout = csp_rtable_find_iface(conn->idout.dst);
-			if (ifout != NULL)
-				ifout->tx_error++;
-			csp_log_warn("RDP send failed!");
 			return 0;
 		}
 	}
 #endif
 
-	ret = csp_send_direct(conn->idout, packet, csp_rtable_find_route(conn->idout.dst), timeout);
+	int ret = csp_send_direct(conn->idout, packet, csp_rtable_find_route(conn->idout.dst), timeout);
 
 	return (ret == CSP_ERR_NONE) ? 1 : 0;
 
