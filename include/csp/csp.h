@@ -78,7 +78,7 @@ static inline void csp_conf_get_defaults(csp_conf_t * conf) {
  * Initialize CSP.
  * This will configure/allocate basic structures.
  * @param[in] conf configuration. A shallow copy will be done of the configuration, i.e. only copy references to strings/structers.
- * @return @ref CSP_ERR
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_init(const csp_conf_t * conf);
 
@@ -218,7 +218,7 @@ csp_packet_t *csp_recvfrom(csp_socket_t *socket, uint32_t timeout);
  * @param opts CSP_O_x
  * @param packet pointer to packet
  * @param timeout timeout used by interfaces with blocking send
- * @return @ref CSP_ERR. On failure, the packet must be freed.
+ * @return #CSP_ERR_NONE on success, otherwise an error code and the packet must be freed.
  */
 int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint32_t opts, csp_packet_t *packet, uint32_t timeout);
 
@@ -229,7 +229,7 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
  * @param reply_packet actual reply data
  * @param opts CSP_O_x
  * @param timeout timeout used by interfaces with blocking send
- * @return @ref CSP_ERR. On failure, the reply_packet must be freed.
+ * @return #CSP_ERR_NONE on success, otherwise an error code and the reply_packet must be freed.
  */
 int csp_sendto_reply(const csp_packet_t * request_packet, csp_packet_t * reply_packet, uint32_t opts, uint32_t timeout);
 
@@ -243,7 +243,7 @@ int csp_sendto_reply(const csp_packet_t * request_packet, csp_packet_t * reply_p
  * @param dport Destination port.
  * @param timeout Timeout in ms.
  * @param opts Connection options.
- * @return a pointer to a new connection or NULL
+ * @return New connectio or NULL on failure.
  */
 csp_conn_t *csp_connect(uint8_t prio, uint8_t dest, uint8_t dport, uint32_t timeout, uint32_t opts);
 
@@ -288,7 +288,7 @@ int csp_conn_flags(csp_conn_t *conn);
  * Set socket to listen for incoming connections
  * @param socket Socket to enable listening on
  * @param backlog Lenght of backlog connection queue. Queue holds incoming connections and returned by csp_accept().
- * @return 0 on success, -1 on error.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_listen(csp_socket_t *socket, size_t backlog);
 
@@ -296,7 +296,7 @@ int csp_listen(csp_socket_t *socket, size_t backlog);
  * Bind port to socket
  * @param socket Socket to bind port to
  * @param port Port number to bind
- * @return 0 on success, -1 on error.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_bind(csp_socket_t *socket, uint8_t port);
 
@@ -304,7 +304,7 @@ int csp_bind(csp_socket_t *socket, uint8_t port);
  * Start the router task.
  * @param task_stack_size The number of portStackType to allocate. This only affects FreeRTOS systems.
  * @param task_priority The OS task priority of the router
- * @return @ref CSP_ERR.
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_route_start_task(unsigned int task_stack_size, unsigned int task_priority);
 
@@ -313,7 +313,7 @@ int csp_route_start_task(unsigned int task_stack_size, unsigned int task_priorit
  * This must be run inside a loop or called periodically for the csp router to work.
  * Use this function instead of calling and starting the router task.
  * @param timeout max blocking time
- * @return -1 if no packet was processed, 0 otherwise
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_route_work(uint32_t timeout);
 
@@ -323,7 +323,7 @@ int csp_route_work(uint32_t timeout);
  * @param task_priority The OS task priority of the router
  * @param _if_a pointer to first side
  * @param _if_b pointer to second side
- * @return @ref CSP_ERR
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, csp_iface_t * _if_a, csp_iface_t * _if_b);
 
@@ -335,7 +335,7 @@ int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, c
  * support promiscuous mode.
  *
  * @param queue_size Size (max length) of queue for incoming packets
- * @return @ref CSP_ERR
+ * @return #CSP_ERR_NONE on success, otherwise an error code.
  */
 int csp_promisc_enable(unsigned int queue_size);
 
@@ -479,22 +479,6 @@ void csp_rdp_set_opt(unsigned int window_size, unsigned int conn_timeout_ms,
 void csp_rdp_get_opt(unsigned int *window_size, unsigned int *conn_timeout_ms,
 		unsigned int *packet_timeout_ms, unsigned int *delayed_acks,
 		unsigned int *ack_timeout, unsigned int *ack_delay_count);
-
-/**
- * Set XTEA key
- * @param key Pointer to key array
- * @param keylen Length of key
- * @return 0 if key was successfully set, -1 otherwise
- */
-int csp_xtea_set_key(char *key, uint32_t keylen);
-
-/**
- * Set HMAC key
- * @param key Pointer to key array
- * @param keylen Length of key
- * @return 0 if key was successfully set, -1 otherwise
- */
-int csp_hmac_set_key(char *key, uint32_t keylen);
 
 /**
  * Print connection table to stdout.
