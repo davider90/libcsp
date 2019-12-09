@@ -103,13 +103,15 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 			}
 		}
 
-		/* Copy CSP identifier and length*/
-		memcpy(&(buf->packet->id), data, sizeof(csp_id_t));
+		/* Copy CSP identifier (header) */
+		memcpy(&(buf->packet->id), data, sizeof(buf->packet->id));
 		buf->packet->id.ext = csp_ntoh32(buf->packet->id.ext);
-		memcpy(&(buf->packet->length), data + sizeof(csp_id_t), sizeof(uint16_t));
+
+		/* Copy CSP length (of data) */
+		memcpy(&(buf->packet->length), data + sizeof(csp_id_t), sizeof(buf->packet->length));
 		buf->packet->length = csp_ntoh16(buf->packet->length);
 
-		/* Check rx length against max */
+		/* Check length against max */
 		if (buf->packet->length > csp_buffer_data_size()) {
 			interface->rx_error++;
 			csp_can_pbuf_free(buf, task_woken);

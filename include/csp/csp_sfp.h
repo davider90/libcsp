@@ -24,63 +24,87 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /**
    @file
 
-   Simple Fragmentation Protocol.
+   Simple Fragmentation Protocol (SFP).
+
+   The SFP API can transfer a blob of data across an established CSP connection, by chopping the data into smaller chuncks of data, that
+   can fit into a single CSP message.
+
+   SFP will add a small header to each packet, containing information about the transfer.
+   SFP is usually sent over a RDP connection (which also adds a header),
 */
 
 #include <csp/csp_types.h>
+#include <string.h> // memcpy()
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Send multiple packets using the simple fragmentation protocol
- * CSP will add total size and offset to all packets
- * This can be read by the client using the csp_sfp_recv, if the CSP_FFRAG flag is set
- * @param conn pointer to connection
- * @param data pointer to data to send
- * @param totalsize size of data to send
- * @param mtu maximum transfer unit
- * @param timeout timeout in ms to wait for csp_send()
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_send(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout);
+   Send data over a CSP connection.
+
+   Data will be send in chunks of \a mtu bytes. The MTU must be small enough to fit into a CSP packat + SFP header + other transport headers.
+
+   csp_sfp_recv() or csp_sfp_recv_fp() can be used at the other end to receive data.
+
+   This is usefull if you wish to send data stored in flash memory or another location, where standard memcpy() doesn't work.
+
+   @param[in] conn established connection for sending SFP packets.
+   @param[in] data data to send
+   @param[in] datasize size of \a data
+   @param[in] mtu maximum transfer unit (bytes), max data chunk to send.
+   @param[in] timeout timeout in ms to wait for csp_send()
+   @param[in] memcpyfcn memory copy function.
+   @return #CSP_ERR_NONE on success, otherwise an error.
+*/
+int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int datasize, unsigned int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn);
 
 /**
- * Same as csp_sfp_send but with option to supply your own memcpy function.
- * This is usefull if you wish to send data stored in flash memory or another location
- * @param conn pointer to connection
- * @param data pointer to data to send
- * @param totalsize size of data to send
- * @param mtu maximum transfer unit
- * @param timeout timeout in ms to wait for csp_send()
- * @param memcpyfcn memcpy function.
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, int totalsize, int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn);
+   Send data over a CSP connection.
 
-/**
- * This is the counterpart to the csp_sfp_send function
- * @param conn pointer to active conn, on which you expect to receive sfp packed data
- * @param dataout pointer to NULL pointer, whill be overwritten with malloc pointer
- * @param datasize actual size of received data
- * @param timeout timeout in ms to wait for csp_recv()
- * @return 0 if OK, -1 if ERR
- */
-int csp_sfp_recv(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout);
+   Uses csp_sfp_send_own_memcpy() with standard memcpy().
 
+   @param[in] conn established connection for sending SFP packets.
+   @param[in] data data to send
+   @param[in] datasize size of \a data
+   @param[in] mtu maximum transfer unit (bytes), max data chunk to send.
+   @param[in] timeout timeout in ms to wait for csp_send()
+   @return #CSP_ERR_NONE on success, otherwise an error.
+*/
+static inline int csp_sfp_send(csp_conn_t * conn, const void * data, unsigned int datasize, unsigned int mtu, uint32_t timeout) {
+    return csp_sfp_send_own_memcpy(conn, data, datasize, mtu, timeout, (csp_memcpy_fnc_t) &memcpy);
+}
+    
 /**
- * This is the counterpart to the csp_sfp_send function
- * @param conn pointer to active conn, on which you expect to receive sfp packed data
- * @param dataout pointer to NULL pointer, whill be overwritten with malloc pointer
- * @param datasize actual size of received data
- * @param timeout timeout in ms to wait for csp_recv()
- * @param first_packet This is a pointer to the first SFP packet (previously received with csp_read)
- * @return 0 if OK, -1 if ERR
- */
+   Receive data over a CSP connection.
+
+   This is the counterpart to the csp_sfp_send() and csp_sfp_send_own_memcpy().
+
+   @param[in] conn established connection for receiving SFP packets.
+   @param[out] dataout received data on success. Allocated with csp_malloc(), so should be freed with csp_free(). The pointer will be NULL on failure.
+   @param[out] datasize size of received data.
+   @param[in] timeout timeout in ms to wait for csp_read()
+   @param[in] first_packet First packet of a SFP transfer. Use NULL to receive first packet on the connection.
+   @return #CSP_ERR_NONE on success, otherwise an error.
+*/
 int csp_sfp_recv_fp(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout, csp_packet_t * first_packet);
 
+/**
+   Receive data over a CSP connection.
+
+   This is the counterpart to the csp_sfp_send() and csp_sfp_send_own_memcpy().
+
+   @param[in] conn established connection for receiving SFP packets.
+   @param[out] dataout received data on success. Allocated with csp_malloc(), so should be freed with csp_free(). The pointer will be NULL on failure.
+   @param[out] datasize size of received data.
+   @param[in] timeout timeout in ms to wait for csp_read()
+   @return #CSP_ERR_NONE on success, otherwise an error.
+*/
+static inline int csp_sfp_recv(csp_conn_t * conn, void ** dataout, int * datasize, uint32_t timeout) {
+    return csp_sfp_recv_fp(conn, dataout, datasize, timeout, NULL);
+}
+
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-#endif // _CSP_SFP_H_
+#endif

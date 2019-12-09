@@ -79,7 +79,8 @@ int csp_zmqhub_tx(const csp_rtable_route_t * route, csp_packet_t * packet, uint3
 CSP_DEFINE_TASK(csp_zmqhub_task) {
 
 	zmq_driver_t * drv = param;
-	const uint32_t HEADER_SIZE = (sizeof(((csp_packet_t *)0)->id) + sizeof(uint8_t));
+	csp_packet_t * packet;
+	const uint32_t HEADER_SIZE = (sizeof(packet->id) + sizeof(uint8_t));
 
 	csp_log_info("RX %s started", drv->interface.name);
 
@@ -87,9 +88,8 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		zmq_msg_t msg;
 		assert(zmq_msg_init_size(&msg, CSP_ZMQ_MTU + HEADER_SIZE) == 0);
 
-		/* Receive data */
+		// Receive data
 		if (zmq_msg_recv(&msg, drv->subscriber, 0) < 0) {
-			zmq_msg_close(&msg);
 			csp_log_error("RX %s: %s", drv->interface.name, zmq_strerror(zmq_errno()));
 			continue;
 		}
@@ -101,25 +101,27 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 			continue;
 		}
 
-		/* Create new csp packet */
-		csp_packet_t * packet = csp_buffer_get(datalen);
+		// Create new csp packet
+		packet = csp_buffer_get(datalen - HEADER_SIZE);
 		if (packet == NULL) {
 			csp_log_warn("RX %s: Failed to get csp_buffer(%u)", drv->interface.name, datalen);
 			zmq_msg_close(&msg);
 			continue;
 		}
 
-		/* Copy the data from zmq to csp */
+		// Copy the data from zmq to csp
 		const uint8_t * rx_data = zmq_msg_data(&msg);
-		// First byte is the MAC (via) address.
-		((csp_zmqhub_csp_packet_t*)(packet))->mac = *rx_data;
+
+		// First byte is the MAC (via) address - the bridge needs it
+		((csp_zmqhub_csp_packet_t*)packet)->mac = *rx_data;
 		++rx_data;
 		--datalen;
+
 		// Remaining is CSP header and payload
 		memcpy(&packet->id, rx_data, datalen);
-		packet->length = datalen - sizeof(packet->id);
+		packet->length = (datalen - sizeof(packet->id));
 
-		/* Queue up packet to router */
+		// Route packet
 		csp_qfifo_write(packet, &drv->interface, NULL);
 
 		zmq_msg_close(&msg);
