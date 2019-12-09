@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    The \b identifier field serves the same purpose as in the Internet Protocol, and should be an auto incrementing
    integer to uniquely separate sessions.
 
-   Other CAN communication using a 11 bit identifier, can co-exist on the wire.
+   Other CAN communication using a standard 11 bit identifier, can co-exist on the wire.
 */
 
 #include <csp/csp_interface.h>

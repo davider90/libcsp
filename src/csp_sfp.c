@@ -37,6 +37,7 @@ typedef struct __attribute__((__packed__)) {
  * information that needs to be appended to all data packets.
  */
 static inline sfp_header_t * csp_sfp_header_add(csp_packet_t * packet) {
+
 	sfp_header_t * header = (sfp_header_t *) &packet->data[packet->length];
 	packet->length += sizeof(*header);
 	return header;
@@ -44,7 +45,6 @@ static inline sfp_header_t * csp_sfp_header_add(csp_packet_t * packet) {
 
 static inline sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 
-	/* Check that SFP header is present */
 	if ((packet->id.flags & CSP_FFRAG) == 0) {
 		return NULL;
 	}
@@ -54,7 +54,15 @@ static inline sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 	}
         header = (sfp_header_t *) &packet->data[packet->length - sizeof(*header)];
 	packet->length -= sizeof(*header);
-	return header;
+
+	header->offset = csp_ntoh32(header->offset);
+	header->totalsize = csp_ntoh32(header->totalsize);
+
+	if (header->offset > header->totalsize) {
+		return NULL;
+	}
+
+        return header;
 }
 
 int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int totalsize, unsigned int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn) {
@@ -135,7 +143,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 		/* Read SFP header */
 		sfp_header_t * sfp_header = csp_sfp_header_remove(packet);
 		if (sfp_header == NULL) {
-			csp_log_error("%s: %u:%u, invalid message, id.flags: 0x%x, length: %u",
+			csp_log_warn("%s: %u:%u, invalid message, id.flags: 0x%x, length: %u",
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					packet->id.flags, packet->length);
 			csp_buffer_free(packet);
@@ -143,8 +151,6 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 			error = CSP_ERR_SFP;
 			goto error;
 		}
-		sfp_header->offset = csp_ntoh32(sfp_header->offset);
-		sfp_header->totalsize = csp_ntoh32(sfp_header->totalsize);
 
 		csp_log_protocol("%s: %u:%u, fragment %"PRIu32"/%"PRIu32,
 					__FUNCTION__, packet->id.src, packet->id.sport,
@@ -152,9 +158,9 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 
 		/* Consistency check */
 		if (sfp_header->offset != data_offset) {
-			csp_log_error("%s: %u:%u, received unexpected offset %"PRIu32" - expected %"PRIu32,
+			csp_log_warn("%s: %u:%u, invalid message, offset %"PRIu32" (expected %"PRIu32"), length: %u, totalsize %"PRIu32,
 					__FUNCTION__, packet->id.src, packet->id.sport,
-					sfp_header->offset, data_offset);
+					sfp_header->offset, data_offset, packet->length, sfp_header->totalsize);
 			csp_buffer_free(packet);
 
 			error = CSP_ERR_SFP;
@@ -166,7 +172,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
                         datasize = sfp_header->totalsize;
 			data = csp_malloc(datasize);
 			if (data == NULL) {
-				csp_log_error("%s: %u:%u, csp_malloc(%"PRIu32") failed",
+				csp_log_warn("%s: %u:%u, csp_malloc(%"PRIu32") failed",
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					datasize);
 				csp_buffer_free(packet);
@@ -178,7 +184,7 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
 
 		/* Consistency check */
 		if (((data_offset + packet->length) > datasize) || (datasize != sfp_header->totalsize)) {
-			csp_log_error("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
+			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
 					__FUNCTION__, packet->id.src, packet->id.sport,
 					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
 			csp_buffer_free(packet);
@@ -198,6 +204,17 @@ int csp_sfp_recv_fp(csp_conn_t * conn, void ** return_data, int * return_datasiz
                         *return_data = data; // must be freed by csp_free()
                         *return_datasize = datasize;
 			return CSP_ERR_NONE;
+		}
+
+		/* Consistency check */
+		if (packet->length == 0) {
+			csp_log_warn("%s: %u:%u, invalid size, sfp.offset: %"PRIu32", length: %u, total: %"PRIu32" / %"PRIu32"",
+					__FUNCTION__, packet->id.src, packet->id.sport,
+					sfp_header->offset, packet->length, datasize, sfp_header->totalsize);
+			csp_buffer_free(packet);
+
+			error = CSP_ERR_SFP;
+			goto error;
 		}
 
 		csp_buffer_free(packet);

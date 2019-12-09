@@ -80,7 +80,7 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 	case CFP_BEGIN:
 
 		/* Discard packet if DLC is less than CSP id + CSP length fields */
-		if (dlc < sizeof(csp_id_t) + sizeof(uint16_t)) {
+		if (dlc < (sizeof(csp_id_t) + sizeof(uint16_t))) {
 			//csp_log_warn("Short BEGIN frame received");
 			interface->frame++;
 			csp_can_pbuf_free(buf, task_woken);
@@ -112,7 +112,7 @@ int csp_can_rx(csp_iface_t *interface, uint32_t id, const uint8_t *data, uint8_t
 		buf->packet->length = csp_ntoh16(buf->packet->length);
 
 		/* Check length against max */
-		if (buf->packet->length > csp_buffer_data_size()) {
+		if ((buf->packet->length > MAX_CAN_DATA_SIZE) || (buf->packet->length > csp_buffer_data_size())) {
 			interface->rx_error++;
 			csp_can_pbuf_free(buf, task_woken);
 			break;
