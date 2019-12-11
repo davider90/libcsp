@@ -18,13 +18,8 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdint.h>
-#include <inttypes.h>
-
-/* CSP includes */
 #include <csp/csp.h>
+#include <stdio.h>
 #include <csp/csp_cmp.h>
 #include <csp/csp_endian.h>
 
@@ -126,35 +121,39 @@ void csp_ps(uint8_t node, uint32_t timeout) {
 
 	/* Open connection */
 	csp_conn_t * conn = csp_connect(CSP_PRIO_NORM, node, CSP_PS, 0, 0);
-	if (conn == NULL)
+	if (conn == NULL) {
 		return;
+	}
 
 	/* Prepare data */
-	csp_packet_t * packet;
-	packet = csp_buffer_get(95);
+	csp_packet_t * packet = csp_buffer_get(95);
 
 	/* Check malloc */
-	if (packet == NULL)
+	if (packet == NULL) {
 		goto out;
+	}
 
 	packet->data[0] = 0x55;
 	packet->length = 1;
 
-	printf("PS node %u: \r\n", (unsigned int) node);
+	printf("PS node %u: \r\n", node);
 
 	/* Try to send frame */
-	if (!csp_send(conn, packet, 0))
+	if (!csp_send(conn, packet, 0)) {
 		goto out;
+	}
 
 	while(1) {
 
 		/* Read incoming frame */
 		packet = csp_read(conn, timeout);
-		if (packet == NULL)
+		if (packet == NULL) {
 			break;
+		}
 
-		/* We have a reply, add our own NULL char */
-		packet->data[packet->length] = 0;
+		/* We have a reply, ensure data is 0 (zero) termianted */
+		const unsigned int length = (packet->length < csp_buffer_data_size()) ? packet->length : (csp_buffer_data_size() - 1);
+		packet->data[length] = 0;
 		printf("%s", packet->data);
 
 		/* Each packet from csp_read must to be freed by user */
