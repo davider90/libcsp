@@ -191,7 +191,7 @@ int main(int argc, char * argv[]) {
 	/* Client */
 	printf("Starting Client task\r\n");
 	csp_thread_handle_t handle_client;
-	csp_thread_create(task_client, "SERVER", 1000, NULL, 0, &handle_client);
+	csp_thread_create(task_client, "CLIENT", 1000, NULL, 0, &handle_client);
 
 	/* Wait for execution to end (ctrl+c) */
 	while(1) {
