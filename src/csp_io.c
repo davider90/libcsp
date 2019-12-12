@@ -124,27 +124,39 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 
 	csp_packet_t * packet = NULL;
 
-	if (conn == NULL || conn->state != CONN_OPEN)
+	if ((conn == NULL) || (conn->state != CONN_OPEN)) {
 		return NULL;
+	}
+
+#ifdef CSP_USE_RDP
+	// GomSpace: Increase read timeout to compensate for re-transmissions - like csp_send()
+        if (timeout && conn->idin.flags & CSP_FRDP) {
+            timeout += conn->rdp.conn_timeout;
+        }
+#endif
 
 #ifdef CSP_USE_QOS
-	int prio, event;
-	if (csp_queue_dequeue(conn->rx_event, &event, timeout) != CSP_QUEUE_OK)
+	int event;
+	if (csp_queue_dequeue(conn->rx_event, &event, timeout) != CSP_QUEUE_OK) {
 		return NULL;
+	}
 
-	for (prio = 0; prio < CSP_RX_QUEUES; prio++)
-		if (csp_queue_dequeue(conn->rx_queue[prio], &packet, 0) == CSP_QUEUE_OK)
+	for (int prio = 0; prio < CSP_RX_QUEUES; prio++) {
+		if (csp_queue_dequeue(conn->rx_queue[prio], &packet, 0) == CSP_QUEUE_OK) {
 			break;
+		}
+	}
 #else
-	if (csp_queue_dequeue(conn->rx_queue[0], &packet, timeout) != CSP_QUEUE_OK)
+	if (csp_queue_dequeue(conn->rx_queue[0], &packet, timeout) != CSP_QUEUE_OK) {
 		return NULL;
+	}
 #endif
 
 #ifdef CSP_USE_RDP
 	/* Packet read could trigger ACK transmission */
-	if (conn->idin.flags & CSP_FRDP && conn->rdp.delayed_acks)
-	    csp_rdp_check_ack(conn);
-
+	if ((conn->idin.flags & CSP_FRDP) && conn->rdp.delayed_acks) {
+		csp_rdp_check_ack(conn);
+	}
 #endif
 
 	return packet;
