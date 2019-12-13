@@ -251,3 +251,4 @@ int csp_cmp(uint8_t node, uint32_t timeout, uint8_t code, int msg_size, struct c
 
 	return CSP_ERR_NONE;
 }
+
