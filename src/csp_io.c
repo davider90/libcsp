@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <csp/csp.h>
 #include <csp/csp_endian.h>
 #include <csp/csp_crc32.h>
@@ -34,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_time.h>
 #include <csp/crypto/csp_hmac.h>
 #include <csp/crypto/csp_xtea.h>
+
 #include "csp_init.h"
 #include "csp_port.h"
 #include "csp_conn.h"

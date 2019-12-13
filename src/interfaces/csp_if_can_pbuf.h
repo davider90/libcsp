@@ -43,4 +43,4 @@ csp_can_pbuf_element_t *csp_can_pbuf_new(uint32_t id, CSP_BASE_TYPE *task_woken)
 csp_can_pbuf_element_t *csp_can_pbuf_find(uint32_t id, uint32_t mask, CSP_BASE_TYPE *task_woken);
 void csp_can_pbuf_cleanup(CSP_BASE_TYPE *task_woken);
 
-#endif /* LIB_CSP_SRC_INTERFACES_CSP_IF_CAN_PBUF_H_ */
+#endif

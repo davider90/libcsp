@@ -26,10 +26,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Debug and log.
 */
 
-#include <csp/csp_types.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdarg.h>
+
+#include <csp/csp_types.h>
 
 #if (CSP_USE_EXTERNAL_DEBUG)
 /* Use external csp_debug API */

@@ -21,7 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* Hash-based Message Authentication Code - based on code from libtom.org */
 
 #include <csp/crypto/csp_hmac.h>
+
 #include <string.h>
+
 #include <csp/csp_buffer.h>
 #include <csp/crypto/csp_sha1.h>
 

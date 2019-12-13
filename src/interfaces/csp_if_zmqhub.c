@@ -18,16 +18,15 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <csp/interfaces/csp_if_zmqhub.h>
+
 #include <assert.h>
 
-/* CSP includes */
 #include <csp/csp.h>
 #include <csp/csp_debug.h>
-#include <csp/csp_interface.h>
 #include <csp/arch/csp_thread.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_semaphore.h>
-#include <csp/interfaces/csp_if_zmqhub.h>
 
 /* ZMQ */
 #include <zmq.h>

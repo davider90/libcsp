@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* Code originally from Python's SHA1 Module, who based it on libtom.org */
 
 #include <csp/crypto/csp_sha1.h>
+
 #include <string.h>
 
 /* Rotate left macro */

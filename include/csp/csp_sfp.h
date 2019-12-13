@@ -33,8 +33,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    SFP is usually sent over a RDP connection (which also adds a header),
 */
 
-#include <csp/csp_types.h>
 #include <string.h> // memcpy()
+
+#include <csp/csp_types.h>
 
 #ifdef __cplusplus
 extern "C" {

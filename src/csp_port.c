@@ -18,20 +18,20 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include "csp_port.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-/* CSP includes */
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_malloc.h>
 
 #include "csp_conn.h"
 #include "csp_init.h"
-#include "csp_port.h"
 
-/* Allocation of ports */
+/* Dynamic allocated port array */
 static csp_port_t * ports;
 
 csp_socket_t * csp_port_get_socket(unsigned int port) {

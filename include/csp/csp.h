@@ -26,12 +26,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    CSP.
 */
 
-#include "csp_platform.h"
-#include "csp_debug.h"
-#include "csp_buffer.h"
-#include "csp_rtable.h"
-#include "csp_iflist.h"
-#include "csp_sfp.h"
+#include <csp/csp_platform.h>
+#include <csp/csp_debug.h>
+#include <csp/csp_buffer.h>
+#include <csp/csp_rtable.h>
+#include <csp/csp_iflist.h>
+#include <csp/csp_sfp.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/arch/csp_system.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/sysinfo.h>
 #include <sys/reboot.h>
 #include <linux/reboot.h>
+
 #include <csp/csp_debug.h>
 
 int csp_sys_tasklist(char * out) {

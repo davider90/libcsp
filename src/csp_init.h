@@ -25,4 +25,4 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern csp_conf_t csp_conf;
 
-#endif /* LIB_CSP_SRC_CSP_INIT_H_ */
+#endif

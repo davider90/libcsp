@@ -21,8 +21,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 /* Simple implementation of XTEA in CTR mode */
 
 #include <csp/crypto/csp_xtea.h>
+
 #include <string.h>
 #include <stdlib.h>
+
 #include <csp/csp_endian.h>
 #include <csp/csp_buffer.h>
 #include <csp/crypto/csp_sha1.h>
