@@ -19,8 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/csp.h>
+
 #include <stdio.h>
 #include <string.h>
+
 #include <csp/csp_cmp.h>
 #include <csp/csp_endian.h>
 #include <csp/csp_platform.h>
@@ -29,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_clock.h>
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_system.h>
+
 #include "csp_init.h"
 
 #define CSP_RPS_MTU	196

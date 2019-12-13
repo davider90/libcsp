@@ -135,7 +135,7 @@ typedef bool (*csp_rtable_iterator_t)(void * ctx, uint8_t address, uint8_t mask,
    Iterate routing table.
 */
 void csp_rtable_iterate(csp_rtable_iterator_t iter, void * ctx);
-    
+
 /**
    Set routing entry.
    @deprecated Use csp_rtable_set() instead.

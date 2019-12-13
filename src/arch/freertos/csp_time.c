@@ -19,8 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/arch/csp_time.h>
+
 #include <FreeRTOS.h>
-#include <task.h>
+#include <task.h> // FreeRTOS
 
 uint32_t csp_get_ms(void) {
 	return (uint32_t)(xTaskGetTickCount() * (1000/configTICK_RATE_HZ));

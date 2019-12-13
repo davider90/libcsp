@@ -21,13 +21,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef _CSP_CONN_H_
 #define _CSP_CONN_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <csp/csp.h>
 #include <csp/arch/csp_queue.h>
 #include <csp/arch/csp_semaphore.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef CSP_USE_RDP_FAST_CLOSE
 #define CSP_USE_RDP_FAST_CLOSE 0

@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include <csp/drivers/can_socketcan.h>
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -30,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef CSP_HAVE_LIBSOCKETCAN
 #include <libsocketcan.h>
 #endif
+
 #include <csp/csp.h>
 
 typedef struct {

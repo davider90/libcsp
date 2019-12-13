@@ -29,8 +29,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
    Inspired by c-pthread-queue by Matthew Dickinson: http://code.google.com/p/c-pthread-queue/
 */
 
-#include <csp/arch/csp_queue.h>
 #include <pthread.h>
+
+#include <csp/arch/csp_queue.h>
 
 #ifdef __cplusplus
 extern "C" {

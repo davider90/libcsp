@@ -18,11 +18,11 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <csp/csp.h>
-#include <csp/csp_interface.h>
-#include <csp/arch/csp_queue.h>
-#include "csp_init.h"
 #include "csp_qfifo.h"
+
+#include <csp/arch/csp_queue.h>
+
+#include "csp_init.h"
 
 static csp_queue_handle_t qfifo[CSP_ROUTE_FIFOS];
 #ifdef CSP_USE_QOS
