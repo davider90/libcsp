@@ -1145,4 +1145,4 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 		conn->rdp.state, conn->rdp.closed_by, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
 
 }
-
+#endif
