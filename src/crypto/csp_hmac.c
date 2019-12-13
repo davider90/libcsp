@@ -191,3 +191,4 @@ int csp_hmac_verify(csp_packet_t * packet, bool include_header) {
 	return CSP_ERR_NONE;
 
 }
+
