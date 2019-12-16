@@ -22,8 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <csp/csp_endian.h>
 
-#ifdef CSP_USE_CRC32
-
 #ifdef __AVR__
 #include <avr/pgmspace.h>
 static const uint32_t crc_tab[256] PROGMEM = {
@@ -130,4 +128,3 @@ int csp_crc32_verify(csp_packet_t * packet, bool include_header) {
 
 }
 
-#endif // CSP_USE_CRC32

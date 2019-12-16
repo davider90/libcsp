@@ -1,20 +1,30 @@
-libcsp 1.6, DD-MM-YYYY
-----------------------
-- Feature release
-- api: Refactored basic configuration and initialization.
 - api: Refactored/aligned csp_rtable cidr and static APIs. Use same format for load and save. 'static' and 'cidr' have the same behaviour.
 - api: csp_rtable_set(static) no longer calls csp_iflist_add().
-- api: csp_buffer_data_size() returns the data size of a csp_buffer - size passed to csp_buffer_init().
 - interfaces: added support for interface data structure, which holds state and Tx driver function (no hardcoded call to Tx on driver layer).
-- improvement: Updated API documentation for doxygen.
 - RDP: always keep connection in CLOSE_WAIT for period of time. In some cases, the connection would switch to CLOSED immediately.
 - RDP: fixed connection leak. If a RST segment was received on a closed connecton, a connection would semi created and never released.
 - RDP: ensure connection is closed from both userspace and protocol, before closing. Multiple calls to csp_close() would close connection, even if userspace still had it open, causing undetermined behaviour.
 - ZMQ/csp_bridge: added support for transfering MAC (via) address.
 
-libcsp 1.5, 21-08-2018
+libcsp 1.6, DD-MM-YYYY
 ----------------------
-- Internal release
+- improvement: Logging, check level before doing the actual call. Added support for external log macros.
+- other: Removed unused defines/functions: csp_conn_lock, csp_conn_unlock, CSP_PROMISC
+- alignment: Replaced CSP_MAX_DELAY and CSP_INFINITY with CSP_MAX_TIMEOUT (same value).
+- api: Added csp_calloc(), csp/arch/csp_malloc.h
+- api: Added csp_buffer_data_size(), csp/csp_buffer.h
+- Updated API/header documentation (doxygen).
+- api/code: Restructured header includes.
+- api: Added const for read-only parameters.
+- api: Changed a number of uint8_t pointers to void, to avoid casts.
+
+libcsp 1.5-internal, 21-08-2018
+-------------------------------
+- Internal release.
+- New python bindings with examples and python3 support.
+- Introduced csp_conf_t, which replaces a number of compile options. This has broken csp_init().
+- Refactored CAN interface.
+- Bug fixes.
 
 libcsp 1.4, 07-05-2015
 ----------------------

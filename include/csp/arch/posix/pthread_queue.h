@@ -109,8 +109,6 @@ int pthread_queue_dequeue(pthread_queue_t * queue, void * buf, uint32_t timeout)
 int pthread_queue_items(pthread_queue_t * queue);
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-
-#endif // _PTHREAD_QUEUE_H_
-
+#endif
