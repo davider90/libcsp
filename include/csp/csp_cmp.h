@@ -212,7 +212,6 @@ static inline int csp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_me
 }
     
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-
-#endif // _CSP_CMP_H_
+#endif

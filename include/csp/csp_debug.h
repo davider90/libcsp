@@ -218,7 +218,6 @@ void csp_debug_hook_set(csp_debug_hook_func_t f);
 
 #endif // CSP_USE_EXTERNAL_DEBUG
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
-
-#endif // _CSP_DEBUG_H_
+#endif
