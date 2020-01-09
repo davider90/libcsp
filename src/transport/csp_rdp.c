@@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #define RDP_EAK 0x04
 #define RDP_RST	0x08
 
+#if (CSP_USE_RDP)
+
 static uint32_t csp_rdp_window_size = 4;
 static uint32_t csp_rdp_conn_timeout = 10000;
 static uint32_t csp_rdp_packet_timeout = 1000;
@@ -1135,7 +1137,7 @@ void csp_rdp_get_opt(unsigned int * window_size, unsigned int * conn_timeout_ms,
 		*ack_delay_count = csp_rdp_ack_delay_count;
 }
 
-#ifdef CSP_DEBUG
+#if (CSP_DEBUG)
 void csp_rdp_conn_print(csp_conn_t * conn) {
 
 	if (conn == NULL)
@@ -1146,3 +1148,5 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 
 }
 #endif
+
+#endif // CSP_USE_RDP

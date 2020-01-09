@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "csp_qfifo.h"
 #include "transport/csp_transport.h"
 
-#ifdef CSP_USE_PROMISC
+#if (CSP_USE_PROMISC)
 extern csp_queue_handle_t csp_promisc_queue;
 #endif
 
@@ -130,14 +130,14 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 		return NULL;
 	}
 
-#ifdef CSP_USE_RDP
-	// GomSpace: Increase read timeout to compensate for re-transmissions - like csp_send()
-        if (timeout && conn->idin.flags & CSP_FRDP) {
-            timeout += conn->rdp.conn_timeout;
+#if (CSP_USE_RDP)
+        // Use connection timeout - TODO or use minimum connection timeout??
+        if (timeout && (conn->idin.flags & CSP_FRDP)) {
+            timeout = conn->rdp.conn_timeout;
         }
 #endif
 
-#ifdef CSP_USE_QOS
+#if (CSP_USE_QOS)
 	int event;
 	if (csp_queue_dequeue(conn->rx_event, &event, timeout) != CSP_QUEUE_OK) {
 		return NULL;
@@ -154,7 +154,7 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 	}
 #endif
 
-#ifdef CSP_USE_RDP
+#if (CSP_USE_RDP)
 	/* Packet read could trigger ACK transmission */
 	if ((conn->idin.flags & CSP_FRDP) && conn->rdp.delayed_acks) {
 		csp_rdp_check_ack(conn);
@@ -185,7 +185,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 	/* Copy identifier to packet (before crc, xtea and hmac) */
 	packet->id.ext = idout.ext;
 
-#ifdef CSP_USE_PROMISC
+#if (CSP_USE_PROMISC)
 	/* Loopback traffic is added to promisc queue by the router */
 	if (idout.dst != csp_get_address() && idout.src == csp_get_address()) {
 		packet->id.ext = idout.ext;
@@ -197,7 +197,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 	if (idout.src == csp_conf.address) {
 		/* Append HMAC */
 		if (idout.flags & CSP_FHMAC) {
-#ifdef CSP_USE_HMAC
+#if (CSP_USE_HMAC)
 			/* Calculate and add HMAC (does not include header for backwards compatability with csp1.x) */
 			if (csp_hmac_append(packet, false) != CSP_ERR_NONE) {
 				/* HMAC append failed */
@@ -212,7 +212,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 
 		/* Append CRC32 */
 		if (idout.flags & CSP_FCRC32) {
-#ifdef CSP_USE_CRC32
+#if (CSP_USE_CRC32)
 			/* Calculate and add CRC32 (does not include header for backwards compatability with csp1.x) */
 			if (csp_crc32_append(packet, false) != CSP_ERR_NONE) {
 				/* CRC32 append failed */
@@ -226,7 +226,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 		}
 
 		if (idout.flags & CSP_FXTEA) {
-#ifdef CSP_USE_XTEA
+#if (CSP_USE_XTEA)
 			/* Encrypt data */
 			if (csp_xtea_encrypt_packet(packet) != CSP_ERR_NONE) {
 				/* Encryption failed */
@@ -268,7 +268,7 @@ int csp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 		return 0;
 	}
 
-#ifdef CSP_USE_RDP
+#if (CSP_USE_RDP)
 	if (conn->idout.flags & CSP_FRDP) {
 		if (csp_rdp_send(conn, packet, timeout) != CSP_ERR_NONE) {
 			return 0;
@@ -361,7 +361,7 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
 	}
 
 	if (opts & CSP_O_HMAC) {
-#ifdef CSP_USE_HMAC
+#if (CSP_USE_HMAC)
 		packet->id.flags |= CSP_FHMAC;
 #else
 		csp_log_error("Attempt to create HMAC authenticated packet, but CSP was compiled without HMAC support");
@@ -370,7 +370,7 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
 	}
 
 	if (opts & CSP_O_XTEA) {
-#ifdef CSP_USE_XTEA
+#if (CSP_USE_XTEA)
 		packet->id.flags |= CSP_FXTEA;
 #else
 		csp_log_error("Attempt to create XTEA encrypted packet, but CSP was compiled without XTEA support");
@@ -379,7 +379,7 @@ int csp_sendto(uint8_t prio, uint8_t dest, uint8_t dport, uint8_t src_port, uint
 	}
 
 	if (opts & CSP_O_CRC32) {
-#ifdef CSP_USE_CRC32
+#if (CSP_USE_CRC32)
 		packet->id.flags |= CSP_FCRC32;
 #else
 		csp_log_error("Attempt to create CRC32 validated packet, but CSP was compiled without CRC32 support");

@@ -50,7 +50,7 @@ extern "C" {
 struct csp_rtable_route_s {
     /** Which interface to route packet on */
     csp_iface_t * interface;
-    /** If difference than #CSP_NODE_MAC, route packet to this address, instead of address in CSP header. */
+    /** If different from #CSP_NODE_MAC, route packet to this address, instead of address in CSP header. */
     uint8_t mac;
 };
 
