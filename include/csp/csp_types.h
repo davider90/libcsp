@@ -30,11 +30,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <csp/csp_autoconfig.h> // -> CSP_X defines
+#include <csp/csp_autoconfig.h> // -> CSP_X defines (compile configuration)
 #include <csp/csp_error.h>
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#if (CSP_BIG_ENDIAN && CSP_LITTLE_ENDIAN)
+#error "Only define/set either CSP_BIG_ENDIAN or CSP_LITTLE_ENDIAN"
 #endif
 
 /**
@@ -119,22 +123,20 @@ typedef union {
     uint32_t ext;
     //! Individual fields.
     struct __attribute__((__packed__)) {
-#if defined(CSP_BIG_ENDIAN) && !defined(CSP_LITTLE_ENDIAN)
+#if (CSP_BIG_ENDIAN)
         unsigned int pri   : CSP_ID_PRIO_SIZE;  //< Priority
         unsigned int src   : CSP_ID_HOST_SIZE;  //< Source address
         unsigned int dst   : CSP_ID_HOST_SIZE;  //< Destination address
         unsigned int dport : CSP_ID_PORT_SIZE;  //< Destination port
         unsigned int sport : CSP_ID_PORT_SIZE;  //< Source port
         unsigned int flags : CSP_ID_FLAGS_SIZE; //< Flags, see @ref CSP_HEADER_FLAGS
-#elif defined(CSP_LITTLE_ENDIAN) && !defined(CSP_BIG_ENDIAN)
+#elif (CSP_LITTLE_ENDIAN)
         unsigned int flags : CSP_ID_FLAGS_SIZE;
         unsigned int sport : CSP_ID_PORT_SIZE;
         unsigned int dport : CSP_ID_PORT_SIZE;
         unsigned int dst   : CSP_ID_HOST_SIZE;
         unsigned int src   : CSP_ID_HOST_SIZE;
         unsigned int pri   : CSP_ID_PRIO_SIZE;
-#else
-#error "Must define one of CSP_BIG_ENDIAN or CSP_LITTLE_ENDIAN in csp_platform.h"
 #endif
     };
 } csp_id_t;

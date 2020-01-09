@@ -79,20 +79,18 @@ typedef struct __attribute__((__packed__)) {
 	union __attribute__((__packed__)) {
 		uint8_t flags;
 		struct __attribute__((__packed__)) {
-#if defined(CSP_BIG_ENDIAN) && !defined(CSP_LITTLE_ENDIAN)
+#if (CSP_BIG_ENDIAN)
 			unsigned int res : 4;
 			unsigned int syn : 1;
 			unsigned int ack : 1;
 			unsigned int eak : 1;
 			unsigned int rst : 1;
-#elif defined(CSP_LITTLE_ENDIAN) && !defined(CSP_BIG_ENDIAN)
+#elif (CSP_LITTLE_ENDIAN)
 			unsigned int rst : 1;
 			unsigned int eak : 1;
 			unsigned int ack : 1;
 			unsigned int syn : 1;
 			unsigned int res : 4;
-#else
-  #error "Must define one of CSP_BIG_ENDIAN or CSP_LITTLE_ENDIAN in csp_platform.h"
 #endif
 		};
 	};
@@ -1147,6 +1145,6 @@ void csp_rdp_conn_print(csp_conn_t * conn) {
 		conn->rdp.state, conn->rdp.closed_by, conn->rdp.rcv_cur, conn->rdp.snd_una, conn->rdp.window_size);
 
 }
-#endif
+#endif // CSP_DEBUG
 
 #endif // CSP_USE_RDP

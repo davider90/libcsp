@@ -39,7 +39,7 @@ static int csp_dedup_in = 0;
 bool csp_dedup_is_duplicate(csp_packet_t *packet)
 {
 	/* Calculate CRC32 for packet */
-	const uint32_t crc = csp_crc32_memory((const uint8_t *)&packet->id, packet->length + sizeof(packet->id));
+	uint32_t crc = csp_crc32_memory((const uint8_t *) &packet->id, packet->length + sizeof(packet->id));
 
 	/* Check if we have received this packet before */
 	for (int i = 0; i < CSP_DEDUP_COUNT; i++) {
