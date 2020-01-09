@@ -110,7 +110,7 @@ static int csp_route_security_check(uint32_t security_opts, csp_iface_t * interf
 			return CSP_ERR_CRC32;
 		}
 #else
-		/* No CRC32 validation - but size must be checked/adjusted */
+		/* No CRC32 validation - but size must be checked and adjusted */
 		if (packet->length < sizeof(uint32_t)) {
 			csp_log_error("CRC32 verification error! Discarding packet");
 			interface->rx_error++;

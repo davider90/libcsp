@@ -29,8 +29,7 @@ valid_loglevel = ['error', 'warn', 'info', 'debug']
 
 
 def options(ctx):
-    # Load GCC options
-    # ctx.load('gcc')
+    # Load compiler
     ctx.load('compiler_c')
 
     ctx.add_option('--toolchain', default=None, help='Set toolchain prefix')
@@ -56,8 +55,8 @@ def options(ctx):
     gr.add_option('--enable-external-debug', action='store_true', help='Enable external debug API')
 
     # Drivers and interfaces (requires external dependencies)
-    gr.add_option('--enable-zmq', action='store_true', help='Enable ZMQ driver/interface')
-    gr.add_option('--enable-socketcan', action='store_true', help='Enable socketcan driver')
+    gr.add_option('--enable-if-zmqhub', action='store_true', help='Enable ZMQ interface')
+    gr.add_option('--enable-can-socketcan', action='store_true', help='Enable Linux socketcan driver')
     gr.add_option('--with-driver-usart', default=None, metavar='DRIVER',
                   help='Build USART driver. [windows, linux, None]')
 
@@ -86,7 +85,6 @@ def configure(ctx):
         ctx.env.CC = ctx.options.toolchain + 'gcc'
         ctx.env.AR = ctx.options.toolchain + 'ar'
 
-    # ctx.load('gcc')
     ctx.load('compiler_c')
 
     # Set git revision define
@@ -127,26 +125,27 @@ def configure(ctx):
     # Add files
     ctx.env.append_unique('FILES_CSP', ['src/*.c',
                                         'src/external/**/*.c',
-                                        'src/transport/*.c',
-                                        'src/crypto/*.c',
-                                        'src/interfaces/*.c',
+                                        'src/transport/**/*.c',
+                                        'src/crypto/**/*.c',
+                                        'src/interfaces/**/*.c',
                                         'src/arch/{0}/**/*.c'.format(ctx.options.with_os),
                                         'src/rtable/csp_rtable.c',
                                         'src/rtable/csp_rtable_{0}.c'.format(ctx.options.with_rtable)])
 
     # Add socketcan
-    if ctx.options.enable_socketcan and ctx.check_cfg(package='libsocketcan', args='--cflags --libs', mandatory=False,
-                                                      define_name='CSP_HAVE_LIBSOCKETCAN'):
-        ctx.env.append_unique('LIBS', ctx.env.LIB_LIBSOCKETCAN)
+    if ctx.options.enable_can_socketcan:
         ctx.env.append_unique('FILES_CSP', 'src/drivers/can/can_socketcan.c')
+        ctx.check_cfg(package='libsocketcan', args='--cflags --libs', mandatory=False,
+                      define_name='CSP_HAVE_LIBSOCKETCAN')
+        ctx.env.append_unique('LIBS', ctx.env.LIB_LIBSOCKETCAN)
 
     # Add USART driver
     if ctx.options.with_driver_usart:
         ctx.env.append_unique('FILES_CSP', 'src/drivers/usart/usart_{0}.c'.format(ctx.options.with_driver_usart))
 
     # Add ZMQ
-    if ctx.options.enable_zmq and ctx.check_cfg(package='libzmq', args='--cflags --libs', mandatory=False,
-                                                define_name='CSP_HAVE_LIBZMQ'):
+    if ctx.options.enable_if_zmqhub:
+        ctx.check_cfg(package='libzmq', args='--cflags --libs', mandatory=False, define_name='CSP_HAVE_LIBZMQ')
         ctx.env.append_unique('LIBS', ctx.env.LIB_LIBZMQ)
 
     # Store configuration options
@@ -163,7 +162,7 @@ def configure(ctx):
     # Set defines for enabling features
     ctx.define_cond('CSP_DEBUG', not ctx.options.disable_output)
     ctx.define_cond('CSP_USE_RDP', ctx.options.enable_rdp)
-    ctx.define_cond('CSP_USE_RDP_FAST_CLOSE', ctx.options.enable_rdp and ctx.options.enable_rdp_fast_close)
+    ctx.define('CSP_USE_RDP_FAST_CLOSE', ctx.options.enable_rdp and ctx.options.enable_rdp_fast_close)
     ctx.define_cond('CSP_USE_CRC32', ctx.options.enable_crc32)
     ctx.define_cond('CSP_USE_HMAC', ctx.options.enable_hmac)
     ctx.define_cond('CSP_USE_XTEA', ctx.options.enable_xtea)
@@ -171,7 +170,7 @@ def configure(ctx):
     ctx.define_cond('CSP_USE_QOS', ctx.options.enable_qos)
     ctx.define_cond('CSP_USE_DEDUP', ctx.options.enable_dedup)
     ctx.define_cond('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
-    ctx.define_cond('CSP_USE_EXTERNAL_DEBUG', ctx.options.enable_external_debug)
+    ctx.define('CSP_USE_EXTERNAL_DEBUG', ctx.options.enable_external_debug)
 
     # Set logging level
     ctx.define_cond('CSP_LOG_LEVEL_DEBUG', ctx.options.with_loglevel in ('debug'))
