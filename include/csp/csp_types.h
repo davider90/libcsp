@@ -28,23 +28,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdint.h>
 #include <stddef.h>
-
-#include <csp/csp_autoconfig.h> // -> CSP_HAVE_X defines
-
-#ifdef CSP_HAVE_STDBOOL_H
 #include <stdbool.h>
-#endif
 
+#include <csp/csp_autoconfig.h> // -> CSP_X defines
 #include <csp/csp_error.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef CSP_HAVE_STDBOOL_H
-#define bool  int    //!< Make bool for compilers without stdbool.h
-#define false 0      //!< false value
-#define true  !false //!< true value.
 #endif
 
 /**

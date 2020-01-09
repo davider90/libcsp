@@ -38,7 +38,7 @@ static int prvTryConfigurePort(const struct usart_conf*);
 static int prvTrySetPortTimeouts(void);
 static const char* prvParityToStr(BYTE paritySetting);
 
-#ifdef CSP_DEBUG
+#if (CSP_DEBUG)
 static void prvPrintError(void) {
     char *messageBuffer = NULL;
     DWORD errorCode = GetLastError();
@@ -62,7 +62,7 @@ static void prvPrintError(void) {
 }
 #endif
 
-#ifdef CSP_DEBUG
+#if (CSP_DEBUG)
 #define printError() prvPrintError()
 #else
 #define printError() do {} while(0)

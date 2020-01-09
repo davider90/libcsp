@@ -32,8 +32,8 @@ typedef struct {
     bool is_zmq;
 } bridge_interface_t;
 
-static bridge_interface_t if_a;
-static bridge_interface_t if_b;
+static bridge_interface_t bif_a;
+static bridge_interface_t bif_b;
 
 static uint8_t get_mac(bridge_interface_t * iface, const csp_packet_t * packet) {
 
@@ -61,18 +61,18 @@ static CSP_DEFINE_TASK(csp_bridge) {
 				packet->id.sport, packet->id.pri, packet->id.flags, packet->length);
 
 		/* Here there be promiscuous mode */
-#ifdef CSP_USE_PROMISC
+#if (CSP_USE_PROMISC)
 		csp_promisc_add(packet);
 #endif
 
 		/* Find the opposing interface */
 		csp_rtable_route_t route;
-		if (input.interface == if_a.iface) {
-			route.interface = if_b.iface;
-			route.mac = get_mac(&if_a, packet);
+		if (input.interface == bif_a.iface) {
+			route.interface = bif_b.iface;
+			route.mac = get_mac(&bif_a, packet);
 		} else {
-			route.interface = if_a.iface;
-			route.mac = get_mac(&if_b, packet);
+			route.interface = bif_a.iface;
+			route.mac = get_mac(&bif_b, packet);
 		}
 
 		/* Send to the interface directly, no hassle */
@@ -99,13 +99,13 @@ static bool is_zmq_interface(const char * ifname)
 	return false;
 }
 
-int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, csp_iface_t * _if_a, csp_iface_t * _if_b) {
+int csp_bridge_start(unsigned int task_stack_size, unsigned int task_priority, csp_iface_t * if_a, csp_iface_t * if_b) {
 
 	/* Set static references to A/B side of bridge */
-	if_a.iface = _if_a;
-	if_a.is_zmq = is_zmq_interface(_if_a->name);
-	if_b.iface = _if_b;
-	if_b.is_zmq = is_zmq_interface(_if_b->name);
+	bif_a.iface = if_a;
+	bif_a.is_zmq = is_zmq_interface(if_a->name);
+	bif_b.iface = if_b;
+	bif_b.is_zmq = is_zmq_interface(if_b->name);
 
 	static csp_thread_handle_t handle;
 	int ret = csp_thread_create(csp_bridge, "BRIDGE", task_stack_size, NULL, task_priority, &handle);

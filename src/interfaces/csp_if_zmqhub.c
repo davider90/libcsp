@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_malloc.h>
 #include <csp/arch/csp_semaphore.h>
 
+#if (CSP_HAVE_LIBZMQ)
+
 /* ZMQ */
 #include <zmq.h>
 
@@ -111,7 +113,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 		// Copy the data from zmq to csp
 		const uint8_t * rx_data = zmq_msg_data(&msg);
 
-		// First byte is the MAC (via) address - the bridge needs it
+		// First byte is the MAC (via) address
 		((csp_zmqhub_csp_packet_t*)packet)->mac = *rx_data;
 		++rx_data;
 		--datalen;
@@ -228,3 +230,5 @@ int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,
 	return CSP_ERR_NONE;
 
 }
+
+#endif // CSP_HAVE_LIBZMQ

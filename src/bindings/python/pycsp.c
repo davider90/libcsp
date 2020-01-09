@@ -440,7 +440,7 @@ static PyObject* pycsp_rdp_set_opt(PyObject *self, PyObject *args) {
                           &ack_timeout, &ack_delay_count)) {
         return NULL; // TypeError is thrown
     }
-#ifdef CSP_USE_RDP
+#if (CSP_USE_RDP)
     csp_rdp_set_opt(window_size, conn_timeout_ms, packet_timeout_ms,
                     delayed_acks, ack_timeout, ack_delay_count);
 #endif
