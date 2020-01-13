@@ -101,20 +101,18 @@ def configure(ctx):
         ctx.env.prepend_value('CFLAGS', ["-std=gnu99", "-g", "-Os", "-Wall", "-Wextra", "-Wshadow", "-Wcast-align",
                                          "-Wwrite-strings", "-Wno-unused-parameter"])
 
-    # Setup extra includes
+    # Setup default include path and any extra defined
     ctx.env.append_unique('INCLUDES_CSP', ['include'] + ctx.options.includes.split(','))
 
     # Store OS as env variable
     ctx.env.append_unique('OS', ctx.options.with_os)
 
-    # Libs
-    if 'posix' in ctx.env.OS:
+    # Platform/OS specifics
+    if ctx.options.with_os == 'posix':
         ctx.env.append_unique('LIBS', ['rt', 'pthread', 'util'])
-    elif 'macosx' in ctx.env.OS:
+    elif ctx.options.with_os == 'macosx':
         ctx.env.append_unique('LIBS', ['pthread'])
-
-    # Windows build flags
-    if ctx.options.with_os == 'windows':
+    elif ctx.options.with_os == 'windows':
         ctx.env.append_unique('CFLAGS', ['-D_WIN32_WINNT=0x0600'])
 
     ctx.define_cond('CSP_FREERTOS', ctx.options.with_os == 'freertos')
@@ -135,8 +133,7 @@ def configure(ctx):
     # Add socketcan
     if ctx.options.enable_can_socketcan:
         ctx.env.append_unique('FILES_CSP', 'src/drivers/can/can_socketcan.c')
-        ctx.check_cfg(package='libsocketcan', args='--cflags --libs', mandatory=False,
-                      define_name='CSP_HAVE_LIBSOCKETCAN')
+        ctx.check_cfg(package='libsocketcan', args='--cflags --libs', define_name='CSP_HAVE_LIBSOCKETCAN')
         ctx.env.append_unique('LIBS', ctx.env.LIB_LIBSOCKETCAN)
 
     # Add USART driver
@@ -145,7 +142,7 @@ def configure(ctx):
 
     # Add ZMQ
     if ctx.options.enable_if_zmqhub:
-        ctx.check_cfg(package='libzmq', args='--cflags --libs', mandatory=False, define_name='CSP_HAVE_LIBZMQ')
+        ctx.check_cfg(package='libzmq', args='--cflags --libs', define_name='CSP_HAVE_LIBZMQ')
         ctx.env.append_unique('LIBS', ctx.env.LIB_LIBZMQ)
 
     # Store configuration options
@@ -160,23 +157,23 @@ def configure(ctx):
                                                    mandatory=False)
 
     # Set defines for enabling features
-    ctx.define_cond('CSP_DEBUG', not ctx.options.disable_output)
-    ctx.define_cond('CSP_USE_RDP', ctx.options.enable_rdp)
+    ctx.define('CSP_DEBUG', not ctx.options.disable_output)
+    ctx.define('CSP_USE_RDP', ctx.options.enable_rdp)
     ctx.define('CSP_USE_RDP_FAST_CLOSE', ctx.options.enable_rdp and ctx.options.enable_rdp_fast_close)
-    ctx.define_cond('CSP_USE_CRC32', ctx.options.enable_crc32)
-    ctx.define_cond('CSP_USE_HMAC', ctx.options.enable_hmac)
-    ctx.define_cond('CSP_USE_XTEA', ctx.options.enable_xtea)
-    ctx.define_cond('CSP_USE_PROMISC', ctx.options.enable_promisc)
-    ctx.define_cond('CSP_USE_QOS', ctx.options.enable_qos)
-    ctx.define_cond('CSP_USE_DEDUP', ctx.options.enable_dedup)
-    ctx.define_cond('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
+    ctx.define('CSP_USE_CRC32', ctx.options.enable_crc32)
+    ctx.define('CSP_USE_HMAC', ctx.options.enable_hmac)
+    ctx.define('CSP_USE_XTEA', ctx.options.enable_xtea)
+    ctx.define('CSP_USE_PROMISC', ctx.options.enable_promisc)
+    ctx.define('CSP_USE_QOS', ctx.options.enable_qos)
+    ctx.define('CSP_USE_DEDUP', ctx.options.enable_dedup)
+    ctx.define('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
     ctx.define('CSP_USE_EXTERNAL_DEBUG', ctx.options.enable_external_debug)
 
     # Set logging level
-    ctx.define_cond('CSP_LOG_LEVEL_DEBUG', ctx.options.with_loglevel in ('debug'))
-    ctx.define_cond('CSP_LOG_LEVEL_INFO', ctx.options.with_loglevel in ('debug', 'info'))
-    ctx.define_cond('CSP_LOG_LEVEL_WARN', ctx.options.with_loglevel in ('debug', 'info', 'warn'))
-    ctx.define_cond('CSP_LOG_LEVEL_ERROR', ctx.options.with_loglevel in ('debug', 'info', 'warn', 'error'))
+    ctx.define('CSP_LOG_LEVEL_DEBUG', ctx.options.with_loglevel in ('debug'))
+    ctx.define('CSP_LOG_LEVEL_INFO', ctx.options.with_loglevel in ('debug', 'info'))
+    ctx.define('CSP_LOG_LEVEL_WARN', ctx.options.with_loglevel in ('debug', 'info', 'warn'))
+    ctx.define('CSP_LOG_LEVEL_ERROR', ctx.options.with_loglevel in ('debug', 'info', 'warn', 'error'))
 
     # Check compiler endianness
     endianness = ctx.check_endianness()
@@ -238,7 +235,7 @@ def build(ctx):
                     lib=ctx.env.LIBS,
                     use='csp')
 
-        if 'linux' in ctx.options.with_driver_usart:
+        if ctx.options.with_driver_usart and (ctx.options.with_driver_usart == 'linux'):
             ctx.program(source='examples/kiss.c',
                         target='kiss',
                         lib=ctx.env.LIBS,

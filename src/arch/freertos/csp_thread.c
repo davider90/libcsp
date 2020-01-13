@@ -37,7 +37,7 @@ int csp_thread_create(csp_thread_func_t routine, const char * const thread_name,
 	return CSP_ERR_NONE;
 }
 
-static inline void csp_thread_exit(void) {
+void csp_thread_exit(void) {
 
 	vTaskDelete(NULL);  // Function must exist, otherwise code wont behave the same on all platforms.
 }
