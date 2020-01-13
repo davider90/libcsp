@@ -50,28 +50,28 @@ extern csp_queue_handle_t csp_promisc_queue;
 csp_socket_t * csp_socket(uint32_t opts) {
 	
 	/* Validate socket options */
-#ifndef CSP_USE_RDP
+#if (CSP_USE_RDP == 0)
 	if (opts & CSP_SO_RDPREQ) {
 		csp_log_error("Attempt to create socket that requires RDP, but CSP was compiled without RDP support");
 		return NULL;
 	}
 #endif
 
-#ifndef CSP_USE_XTEA
+#if (CSP_USE_XTEA == 0)
 	if (opts & CSP_SO_XTEAREQ) {
 		csp_log_error("Attempt to create socket that requires XTEA, but CSP was compiled without XTEA support");
 		return NULL;
 	}
 #endif
 
-#ifndef CSP_USE_HMAC
+#if (CSP_USE_HMAC == 0)
 	if (opts & CSP_SO_HMACREQ) {
 		csp_log_error("Attempt to create socket that requires HMAC, but CSP was compiled without HMAC support");
 		return NULL;
 	} 
 #endif
 
-#ifndef CSP_USE_CRC32
+#if (CSP_USE_CRC32 == 0)
 	if (opts & CSP_SO_CRC32REQ) {
 		csp_log_error("Attempt to create socket that requires CRC32, but CSP was compiled without CRC32 support");
 		return NULL;
@@ -177,7 +177,7 @@ int csp_send_direct(csp_id_t idout, csp_packet_t * packet, const csp_rtable_rout
 		goto err;
 	}
 
-	csp_iface_t * ifout = ifroute->interface;
+	csp_iface_t * ifout = ifroute->iface;
 
 	csp_log_packet("OUT: S %u, D %u, Dp %u, Sp %u, Pr %u, Fl 0x%02X, Sz %u VIA: %s (%u)",
                        idout.src, idout.dst, idout.dport, idout.sport, idout.pri, idout.flags, packet->length, ifout->name, (ifroute->mac != CSP_NODE_MAC) ? ifroute->mac : idout.dst);
