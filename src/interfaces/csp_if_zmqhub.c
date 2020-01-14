@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define CSP_ZMQ_MTU   1024   // max payload data, see documentation
 
-// Ensure certain fields in the zmqhub_csp_packet_t matches the fields in the csp_packet_t
+// GomSpace: Ensure certain fields in the zmqhub_csp_packet_t matches the fields in the csp_packet_t
 CSP_STATIC_ASSERT(offsetof(csp_zmqhub_csp_packet_t, length) == offsetof(csp_packet_t, length), length_field_misaligned);
 CSP_STATIC_ASSERT(offsetof(csp_zmqhub_csp_packet_t, id) == offsetof(csp_packet_t, id), id_field_misaligned);
 

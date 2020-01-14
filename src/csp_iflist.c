@@ -26,10 +26,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/csp_debug.h>
 
 /* Interfaces are stored in a linked list */
-static csp_iface_t * ifaces = NULL;
+static csp_iface_t * interfaces = NULL;
 
 csp_iface_t * csp_iflist_get_by_name(const char *name) {
-	csp_iface_t *ifc = ifaces;
+	csp_iface_t *ifc = interfaces;
 	while(ifc) {
 		if (strncasecmp(ifc->name, name, CSP_IFLIST_NAME_MAX) == 0) {
 			break;
@@ -44,13 +44,13 @@ int csp_iflist_add(csp_iface_t *ifc) {
 	ifc->next = NULL;
 
 	/* Add interface to pool */
-	if (ifaces == NULL) {
+	if (interfaces == NULL) {
 		/* This is the first interface to be added */
-		ifaces = ifc;
+		interfaces = ifc;
 	} else {
 		/* Insert interface last if not already in pool */
 		csp_iface_t * last = NULL;
-		for (csp_iface_t * i = ifaces; i != NULL; i = i->next) {
+		for (csp_iface_t * i = interfaces; i != NULL; i = i->next) {
 			if ((i == ifc) || (strncasecmp(ifc->name, i->name, CSP_IFLIST_NAME_MAX) == 0)) {
 				return CSP_ERR_ALREADY;
 			}
@@ -65,7 +65,7 @@ int csp_iflist_add(csp_iface_t *ifc) {
 
 csp_iface_t * csp_iflist_get(void)
 {
-    return ifaces;
+    return interfaces;
 }
 
 #if (CSP_DEBUG)
@@ -88,7 +88,7 @@ int csp_bytesize(char *buffer, int buffer_len, unsigned long int bytes) {
 }
 
 void csp_iflist_print(void) {
-	csp_iface_t * i = ifaces;
+	csp_iface_t * i = interfaces;
 	char txbuf[25], rxbuf[25];
 
 	while (i) {

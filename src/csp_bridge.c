@@ -29,12 +29,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct {
     csp_iface_t* iface;
-    bool is_zmq;
+    bool is_zmq; // GomSpace
 } bridge_interface_t;
 
 static bridge_interface_t bif_a;
 static bridge_interface_t bif_b;
 
+// GomSpace
 static uint8_t get_mac(bridge_interface_t * iface, const csp_packet_t * packet) {
 
 	if (iface->is_zmq) {
@@ -86,6 +87,7 @@ static CSP_DEFINE_TASK(csp_bridge) {
 
 }
 
+// GomSpace
 static bool is_zmq_interface(const char * ifname)
 {
 	if (ifname) {
