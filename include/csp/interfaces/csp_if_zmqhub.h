@@ -55,7 +55,7 @@ extern "C" {
 #define CSP_ZMQHUB_IF_NAME            "ZMQHUB"
 
 /**
-   ZMQHUB packet overlay for csp_packet_t.
+   GomSpace: ZMQHUB packet overlay for csp_packet_t.
    The ZMQ interface stores the MAC/via address in padding, making it possible for the csp_bridge to transfer it to another interface.
 */
 typedef struct {
