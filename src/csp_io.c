@@ -131,8 +131,8 @@ csp_packet_t * csp_read(csp_conn_t * conn, uint32_t timeout) {
 	}
 
 #if (CSP_USE_RDP)
-        // Use connection timeout - TODO or use minimum connection timeout??
-        if (timeout && (conn->idin.flags & CSP_FRDP)) {
+        // RDP: timeout can either be 0 (for no hang poll/check) or minimum the "connection timeout"
+        if (timeout && (conn->idin.flags & CSP_FRDP) && (timeout < conn->rdp.conn_timeout)) {
             timeout = conn->rdp.conn_timeout;
         }
 #endif

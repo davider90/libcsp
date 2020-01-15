@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-os = 'posix'  ## default OS
+os = 'posix'  # default OS
 options = sys.argv[1:]
 if (len(options) > 0) and not options[0].startswith('--'):
     os = options[0]
