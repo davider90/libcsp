@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "csp_promisc.h"
 
 typedef struct {
-    csp_iface_t* iface;
-    bool is_zmq; // GomSpace
+	csp_iface_t* iface;
+	bool is_zmq; // GomSpace
 } bridge_interface_t;
 
 static bridge_interface_t bif_a;

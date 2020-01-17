@@ -210,7 +210,7 @@ static inline int csp_cmp_peek(uint8_t node, uint32_t timeout, struct csp_cmp_me
 static inline int csp_cmp_poke(uint8_t node, uint32_t timeout, struct csp_cmp_message *msg) {
     return csp_cmp(node, timeout, CSP_CMP_POKE, CMP_SIZE(poke) - sizeof(msg->poke.data) + msg->poke.len, msg);
 }
-    
+
 #ifdef __cplusplus
 }
 #endif

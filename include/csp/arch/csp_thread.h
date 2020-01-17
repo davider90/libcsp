@@ -126,7 +126,7 @@ void csp_thread_exit(void);
    @param[in] time_ms mS to sleep.
 */
 void csp_sleep_ms(unsigned int time_ms);
-    
+
 #ifdef __cplusplus
 }
 #endif

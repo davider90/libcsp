@@ -72,7 +72,7 @@ int csp_buffer_init(size_t buf_count, size_t _data_size) {
 		csp_skbf_t * buf = (void *) &csp_buffer_pool[i * skbfsize];
 		buf->skbf_addr = buf;
 		csp_queue_enqueue(csp_buffers, &buf, 0);
-        }
+	}
 
 	return CSP_ERR_NONE;
 
