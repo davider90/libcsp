@@ -778,11 +778,11 @@ static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
 		return NULL; // TypeError is thrown
 	}
 
-        struct usart_conf conf = {.device = device, .baudrate = baudrate};
+	struct usart_conf conf = {.device = device, .baudrate = baudrate};
         int res = usart_open_and_add_kiss_interface(&conf, if_name, NULL);
         if (res != CSP_ERR_NONE) {
 		return NULL; // TypeError is thrown
-        }
+	}
 
 	Py_RETURN_NONE;
 }

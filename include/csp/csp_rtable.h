@@ -41,7 +41,7 @@ extern "C" {
 /**
    Node MAC address (i.e. not set) -> use CSP header destination.
 */
-#define CSP_NODE_MAC				0xFF
+#define CSP_NODE_MAC	0xFF
 
 /**
    Route entry.

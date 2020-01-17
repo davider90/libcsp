@@ -36,20 +36,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 // CAN interface data, state, etc.
 typedef struct {
-    char name[CSP_IFLIST_NAME_MAX + 1];
-    csp_iface_t iface;
-    csp_can_interface_data_t ifdata;
-    pthread_t rx_thread;
-    int socket;
+	char name[CSP_IFLIST_NAME_MAX + 1];
+	csp_iface_t iface;
+	csp_can_interface_data_t ifdata;
+	pthread_t rx_thread;
+	int socket;
 } can_context_t;
 
 static void socketcan_free(can_context_t * ctx) {
-    if (ctx) {
-        if (ctx->socket >= 0) {
-            close(ctx->socket);
-        }
-        free(ctx);
-    }
+
+	if (ctx) {
+		if (ctx->socket >= 0) {
+			close(ctx->socket);
+		}
+		free(ctx);
+	}
 }
 
 static void * socketcan_rx_thread(void * arg)
@@ -190,7 +191,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 		csp_log_error("%s[%s]: csp_can_add_interface() failed, error: %d", __FUNCTION__, ctx->name, res);
 		socketcan_free(ctx);
 		return res;
-        }
+	}
 
 	/* Create receive thread */
 	if (pthread_create(&ctx->rx_thread, NULL, socketcan_rx_thread, ctx) != 0) {

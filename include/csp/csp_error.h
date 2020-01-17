@@ -53,7 +53,7 @@ extern "C" {
 #define CSP_ERR_CRC32		-102		/**< CRC32 failed */
 #define CSP_ERR_SFP		-103		/**< SFP protocol error or inconsistency */
 /**@}*/
-    
+
 #ifdef __cplusplus
 }
 #endif

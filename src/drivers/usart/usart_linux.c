@@ -36,17 +36,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <csp/arch/csp_malloc.h>
 
 typedef struct {
-    usart_callback_t rx_callback;
-    void * user_data;
-    int fd;
-    pthread_t rx_thread;
+	usart_callback_t rx_callback;
+	void * user_data;
+	int fd;
+	pthread_t rx_thread;
 } usart_context_t;
 
 static void * usart_rx_thread(void * arg) {
 
-    usart_context_t * ctx = arg;
-    const unsigned int CBUF_SIZE = 400;
-    uint8_t * cbuf = malloc(CBUF_SIZE);
+	usart_context_t * ctx = arg;
+	const unsigned int CBUF_SIZE = 400;
+	uint8_t * cbuf = malloc(CBUF_SIZE);
 
 	// Receive loop
 	while (1) {
@@ -248,11 +248,11 @@ int usart_open(const usart_conf_t *conf, usart_callback_t rx_callback, void * us
 		close(fd);
 		return CSP_ERR_NOMEM;
             }
-        }
+	}
 
         if (return_fd) {
             *return_fd = fd;
-        }
+	}
 
 	return CSP_ERR_NONE;
 }
@@ -260,57 +260,57 @@ int usart_open(const usart_conf_t *conf, usart_callback_t rx_callback, void * us
 // csp/interfaces/csp_if_kiss.h
 
 typedef struct {
-    char name[CSP_IFLIST_NAME_MAX + 1];
-    csp_iface_t iface;
-    csp_kiss_interface_data_t ifdata;
-    int fd;
+	char name[CSP_IFLIST_NAME_MAX + 1];
+	csp_iface_t iface;
+	csp_kiss_interface_data_t ifdata;
+	int fd;
 } kiss_context_t;
 
 static int kiss_driver_tx(void *driver_data, const unsigned char * data, size_t data_length) {
 
-    kiss_context_t * ctx = driver_data;
-    if (ctx->fd >= 0) {
-        if (write(ctx->fd, data, data_length) == (int) data_length) {
-            return CSP_ERR_NONE;
-        }
-        return CSP_ERR_TX;
-    }
-    return CSP_ERR_DRIVER;
+	kiss_context_t * ctx = driver_data;
+	if (ctx->fd >= 0) {
+		if (write(ctx->fd, data, data_length) == (int) data_length) {
+			return CSP_ERR_NONE;
+		}
+		return CSP_ERR_TX;
+	}
+	return CSP_ERR_DRIVER;
 }
 
 static void usart_rx_callback(void * user_data, uint8_t * data, size_t data_size, void * pxTaskWoken) {
 
-    kiss_context_t * ctx = user_data;
-    csp_kiss_rx(&ctx->iface, data, data_size, NULL);
+	kiss_context_t * ctx = user_data;
+	csp_kiss_rx(&ctx->iface, data, data_size, NULL);
 }
 
 int usart_open_and_add_kiss_interface(const usart_conf_t *conf, const char * ifname, csp_iface_t ** return_iface) {
 
-    kiss_context_t * ctx = csp_calloc(1, sizeof(*ctx));
-    if (ctx == NULL) {
-        return CSP_ERR_NOMEM;
-    }
+	kiss_context_t * ctx = csp_calloc(1, sizeof(*ctx));
+	if (ctx == NULL) {
+		return CSP_ERR_NOMEM;
+	}
 
-    if (ifname == NULL) {
-        ifname = CSP_IF_KISS_DEFAULT_NAME;
-    }
+	if (ifname == NULL) {
+		ifname = CSP_IF_KISS_DEFAULT_NAME;
+	}
 
-    strncpy(ctx->name, ifname, sizeof(ctx->name) - 1);
-    ctx->iface.name = ctx->name;
-    ctx->iface.driver_data = ctx;
-    ctx->iface.interface_data = &ctx->ifdata;
-    ctx->ifdata.tx_func = kiss_driver_tx;
-    ctx->fd = -1;
+	strncpy(ctx->name, ifname, sizeof(ctx->name) - 1);
+	ctx->iface.name = ctx->name;
+	ctx->iface.driver_data = ctx;
+	ctx->iface.interface_data = &ctx->ifdata;
+	ctx->ifdata.tx_func = kiss_driver_tx;
+	ctx->fd = -1;
 
-    int res = csp_kiss_add_interface(&ctx->iface);
-    if (res == CSP_ERR_NONE) {
-	res = usart_open(conf, usart_rx_callback, ctx, &ctx->fd);
-    }
+	int res = csp_kiss_add_interface(&ctx->iface);
+	if (res == CSP_ERR_NONE) {
+		res = usart_open(conf, usart_rx_callback, ctx, &ctx->fd);
+	}
 
-    if (return_iface) {
-        *return_iface = &ctx->iface;
-    }
+	if (return_iface) {
+		*return_iface = &ctx->iface;
+	}
 
-    return res;
+	return res;
 }
 

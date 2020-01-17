@@ -63,7 +63,7 @@ static inline sfp_header_t * csp_sfp_header_remove(csp_packet_t * packet) {
 		return NULL;
 	}
 
-        return header;
+	return header;
 }
 
 int csp_sfp_send_own_memcpy(csp_conn_t * conn, const void * data, unsigned int totalsize, unsigned int mtu, uint32_t timeout, csp_memcpy_fnc_t memcpyfcn) {

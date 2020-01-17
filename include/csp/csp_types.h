@@ -160,7 +160,7 @@ typedef union {
 #define CSP_FRDP			0x02 //!< Use RDP protocol
 #define CSP_FCRC32			0x01 //!< Use CRC32 checksum
 /**@}*/
-    
+
 /**
    @defgroup CSP_SOCKET_OPTIONS CSP Socket options.
    @{

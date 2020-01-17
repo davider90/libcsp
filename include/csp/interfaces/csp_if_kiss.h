@@ -63,20 +63,20 @@ typedef enum {
    KISS interface data (state information).
 */
 typedef struct {
-    /** Max Rx length */
-    unsigned int max_rx_length;
-    /** Tx function */
-    csp_kiss_driver_tx_f tx_func;
-    /** Tx lock. Current implementation doesn't transfer data to driver in a single 'write', hence locking is necessary. */
-    csp_mutex_t lock;
-    /** Rx mode/state. */
-    kiss_mode_e rx_mode;
-    /** Rx length */
-    unsigned int rx_length;
-    /** Rx first - if set, waiting for first character (== TNC_DATA) after start */
-    bool rx_first;
-    /** CSP packet for storing Rx data. */
-    csp_packet_t * rx_packet;
+	/** Max Rx length */
+	unsigned int max_rx_length;
+	/** Tx function */
+	csp_kiss_driver_tx_f tx_func;
+	/** Tx lock. Current implementation doesn't transfer data to driver in a single 'write', hence locking is necessary. */
+	csp_mutex_t lock;
+	/** Rx mode/state. */
+	kiss_mode_e rx_mode;
+	/** Rx length */
+	unsigned int rx_length;
+	/** Rx first - if set, waiting for first character (== TNC_DATA) after start */
+	bool rx_first;
+	/** CSP packet for storing Rx data. */
+	csp_packet_t * rx_packet;
 } csp_kiss_interface_data_t;
 
 /**
