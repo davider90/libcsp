@@ -41,5 +41,12 @@ void csp_thread_exit(void) {
 
 void csp_sleep_ms(unsigned int time_ms) {
 
-	usleep(time_ms * 1000);
+
+	struct timespec req, rem;
+	req.tv_sec = (time_ms / 1000U);
+	req.tv_nsec = ((time_ms % 1000U) * 1000000U);
+
+	while ((nanosleep(&req, &rem) < 0) && (errno == EINTR)) {
+		req = rem;
+	}
 }
