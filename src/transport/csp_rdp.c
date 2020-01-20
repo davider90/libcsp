@@ -1021,7 +1021,7 @@ int csp_rdp_send(csp_conn_t * conn, csp_packet_t * packet, uint32_t timeout) {
 
 }
 
-int csp_rdp_allocate(csp_conn_t * conn) {
+int csp_rdp_init(csp_conn_t * conn) {
 
 	csp_log_protocol("RDP %p: Creating RDP queues", conn);
 
@@ -1055,6 +1055,13 @@ int csp_rdp_allocate(csp_conn_t * conn) {
 
 	return CSP_ERR_NONE;
 
+}
+
+void csp_rdp_free_resources(csp_conn_t * conn) {
+
+	csp_bin_sem_remove(&conn->rdp.tx_wait);
+	csp_queue_remove(conn->rdp.tx_queue);
+	csp_queue_remove(conn->rdp.rx_queue);
 }
 
 /**
