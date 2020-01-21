@@ -998,6 +998,7 @@ PyMODINIT_FUNC PyInit_libcsp_py3(void) {
         /**
          * csp/rtable.h
          */
+        PyModule_AddIntConstant(m, "CSP_NODE_MAC", CSP_NODE_MAC);
         PyModule_AddIntConstant(m, "CSP_NO_VIA_ADDRESS", CSP_NO_VIA_ADDRESS);
 
 #if (PY_MAJOR_VERSION == 3)
