@@ -36,12 +36,12 @@ static bridge_interface_t bif_a;
 static bridge_interface_t bif_b;
 
 // GomSpace
-static uint8_t get_mac(bridge_interface_t * iface, const csp_packet_t * packet) {
+static uint8_t get_via(bridge_interface_t * iface, const csp_packet_t * packet) {
 
 	if (iface->is_zmq) {
-		return ((const csp_zmqhub_csp_packet_t *)packet)->mac;
+		return ((const csp_zmqhub_csp_packet_t *)packet)->via;
 	}
-	return CSP_NODE_MAC;
+	return CSP_NO_VIA_ADDRESS;
 }
 
 static CSP_DEFINE_TASK(csp_bridge) {
@@ -67,13 +67,13 @@ static CSP_DEFINE_TASK(csp_bridge) {
 #endif
 
 		/* Find the opposing interface */
-		csp_rtable_route_t route;
+		csp_route_t route;
 		if (input.iface == bif_a.iface) {
 			route.iface = bif_b.iface;
-			route.mac = get_mac(&bif_a, packet);
+			route.via = get_via(&bif_a, packet);
 		} else {
 			route.iface = bif_a.iface;
-			route.mac = get_mac(&bif_b, packet);
+			route.via = get_via(&bif_b, packet);
 		}
 
 		/* Send to the interface directly, no hassle */
