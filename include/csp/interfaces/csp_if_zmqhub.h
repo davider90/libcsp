@@ -56,11 +56,11 @@ extern "C" {
 
 /**
    GomSpace: ZMQHUB packet overlay for csp_packet_t.
-   The ZMQ interface stores the MAC/via address in padding, making it possible for the csp_bridge to transfer it to another interface.
+   The ZMQ interface stores the "via" address in padding, making it possible for the csp_bridge to transfer it to another interface.
 */
 typedef struct {
-	//! MAC (via) address (-> csp_packet_t.padding)
-	uint8_t mac;
+	//! Via address (-> csp_packet_t.padding)
+	uint8_t via;
 	//! Not used  (-> csp_packet_t.padding)
 	uint8_t padding[CSP_PADDING_BYTES - sizeof(uint8_t)];
 	//! Length (-> csp_packet_t.length)
