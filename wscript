@@ -53,6 +53,7 @@ def options(ctx):
     gr.add_option('--enable-examples', action='store_true', help='Enable examples')
     gr.add_option('--enable-dedup', action='store_true', help='Enable packet deduplicator')
     gr.add_option('--enable-external-debug', action='store_true', help='Enable external debug API')
+    gr.add_option('--enable-debug-timestamp', action='store_true', help='Enable timestamps on debug/log')
 
     # Drivers and interfaces (requires external dependencies)
     gr.add_option('--enable-if-zmqhub', action='store_true', help='Enable ZMQ interface')
@@ -63,7 +64,6 @@ def options(ctx):
     # OS
     gr.add_option('--with-os', metavar='OS', default='posix',
                   help='Set operating system. Must be one of: ' + str(valid_os))
-    gr.add_option('--enable-init-shutdown', action='store_true', help='Use init system commands for shutdown/reboot')
 
     # Options
     gr.add_option('--with-loglevel', metavar='LEVEL', default='debug',
@@ -99,7 +99,7 @@ def configure(ctx):
     # Setup CFLAGS
     if (len(ctx.stack_path) <= 1) and (len(ctx.env.CFLAGS) == 0):
         ctx.env.prepend_value('CFLAGS', ["-std=gnu99", "-g", "-Os", "-Wall", "-Wextra", "-Wshadow", "-Wcast-align",
-                                         "-Wwrite-strings", "-Wno-unused-parameter"])
+                                         "-Wwrite-strings", "-Wno-unused-parameter", "-Werror"])
 
     # Setup default include path and any extra defined
     ctx.env.append_unique('INCLUDES_CSP', ['include'] + ctx.options.includes.split(','))
@@ -126,6 +126,7 @@ def configure(ctx):
                                         'src/transport/**/*.c',
                                         'src/crypto/**/*.c',
                                         'src/interfaces/**/*.c',
+                                        'src/arch/*.c',
                                         'src/arch/{0}/**/*.c'.format(ctx.options.with_os),
                                         'src/rtable/csp_rtable.c',
                                         'src/rtable/csp_rtable_{0}.c'.format(ctx.options.with_rtable)])
@@ -138,7 +139,8 @@ def configure(ctx):
 
     # Add USART driver
     if ctx.options.with_driver_usart:
-        ctx.env.append_unique('FILES_CSP', 'src/drivers/usart/usart_{0}.c'.format(ctx.options.with_driver_usart))
+        ctx.env.append_unique('FILES_CSP', ['src/drivers/usart/usart_kiss.c',
+                                            'src/drivers/usart/usart_{0}.c'.format(ctx.options.with_driver_usart)])
 
     # Add ZMQ
     if ctx.options.enable_if_zmqhub:
@@ -158,6 +160,7 @@ def configure(ctx):
 
     # Set defines for enabling features
     ctx.define('CSP_DEBUG', not ctx.options.disable_output)
+    ctx.define('CSP_DEBUG_TIMESTAMP', ctx.options.enable_debug_timestamp)
     ctx.define('CSP_USE_RDP', ctx.options.enable_rdp)
     ctx.define('CSP_USE_RDP_FAST_CLOSE', ctx.options.enable_rdp and ctx.options.enable_rdp_fast_close)
     ctx.define('CSP_USE_CRC32', ctx.options.enable_crc32)
@@ -166,7 +169,6 @@ def configure(ctx):
     ctx.define('CSP_USE_PROMISC', ctx.options.enable_promisc)
     ctx.define('CSP_USE_QOS', ctx.options.enable_qos)
     ctx.define('CSP_USE_DEDUP', ctx.options.enable_dedup)
-    ctx.define('CSP_USE_INIT_SHUTDOWN', ctx.options.enable_init_shutdown)
     ctx.define('CSP_USE_EXTERNAL_DEBUG', ctx.options.enable_external_debug)
 
     # Set logging level
@@ -230,32 +232,20 @@ def build(ctx):
                       lib=ctx.env.LIBS)
 
     if ctx.env.ENABLE_EXAMPLES:
-        ctx.program(source='examples/simple.c',
-                    target='simple',
+        ctx.program(source='examples/csp_server_client.c',
+                    target='csp_server_client',
                     lib=ctx.env.LIBS,
                     use='csp')
 
-        if ctx.options.with_driver_usart and (ctx.options.with_driver_usart == 'linux'):
-            ctx.program(source='examples/kiss.c',
-                        target='kiss',
-                        lib=ctx.env.LIBS,
-                        use='csp')
+        ctx.program(source='examples/test_arch.c',
+                    target='test_arch',
+                    lib=ctx.env.LIBS,
+                    use='csp')
 
         if ctx.env.CSP_HAVE_LIBZMQ:
             ctx.program(source='examples/zmqproxy.c',
                         target='zmqproxy',
                         lib=ctx.env.LIBS,
-                        use='csp')
-
-        if 'posix' in ctx.env.OS:
-            ctx.program(source='examples/csp_if_fifo.c',
-                        target='fifo',
-                        lib=ctx.env.LIBS,
-                        use=['csp'])
-
-        if 'windows' in ctx.env.OS:
-            ctx.program(source='examples/csp_if_fifo_windows.c',
-                        target='csp_if_fifo',
                         use='csp')
 
 

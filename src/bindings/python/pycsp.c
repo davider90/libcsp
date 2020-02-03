@@ -51,22 +51,16 @@ static PyObject* pycsp_service_handler(PyObject *self, PyObject *args) {
 }
 
 /*
- * int csp_init(uint8_t my_node_address);
+ * int csp_init(const csp_conf_t * conf);
  */
 static PyObject* pycsp_init(PyObject *self, PyObject *args) {
-    uint8_t my_node_address;
-    char* hostname;
-    char* model;
-    char* revision;
-    if (!PyArg_ParseTuple(args, "bsss", &my_node_address, &hostname, &model, &revision)) {
-        return NULL; // TypeError is thrown
-    }
 
     csp_conf_t conf;
     csp_conf_get_defaults(&conf);
-    conf.hostname = hostname;
-    conf.model = model;
-    conf.revision = revision;
+
+    if (!PyArg_ParseTuple(args, "bsssHH", &conf.address, &conf.hostname, &conf.model, &conf.revision, &conf.buffers, &conf.buffer_data_size)) {
+        return NULL; // TypeError is thrown
+    }
 
     return Py_BuildValue("i", csp_init(&conf));
 }
@@ -549,19 +543,6 @@ static PyObject* pycsp_rtable_load(PyObject *self, PyObject *args) {
  */
 
 /*
- * int csp_buffer_init(int count, int size);
- */
-static PyObject* pycsp_buffer_init(PyObject *self, PyObject *args) {
-    int count;
-    int size;
-    if (!PyArg_ParseTuple(args, "ii", &count, &size)) {
-        return NULL; // TypeError is thrown
-    }
-
-    return Py_BuildValue("i", csp_buffer_init(count, size));
-}
-
-/*
  * void * csp_buffer_get(size_t size);
  */
 static PyObject* pycsp_buffer_get(PyObject *self, PyObject *args) {
@@ -736,7 +717,7 @@ static PyObject* pycsp_zmqhub_init(PyObject *self, PyObject *args) {
         return NULL; // TypeError is thrown
     }
 
-    return Py_BuildValue("i", csp_zmqhub_init(addr, host));
+    return Py_BuildValue("i", csp_zmqhub_init(addr, host, NULL));
 }
 
 /**
@@ -777,8 +758,8 @@ static PyObject* pycsp_kiss_init(PyObject *self, PyObject *args) {
 		return NULL; // TypeError is thrown
 	}
 
-	struct usart_conf conf = {.device = device, .baudrate = baudrate};
-        int res = usart_open_and_add_kiss_interface(&conf, if_name, NULL);
+	csp_usart_conf_t conf = {.device = device, .baudrate = baudrate};
+        int res = csp_usart_open_and_add_kiss_interface(&conf, if_name, NULL);
         if (res != CSP_ERR_NONE) {
 		return NULL; // TypeError is thrown
 	}
@@ -867,7 +848,6 @@ static PyMethodDef methods[] = {
     {"rtable_load", pycsp_rtable_load, METH_VARARGS, ""},
 
     /* csp/csp_buffer.h */
-    {"buffer_init", pycsp_buffer_init, METH_VARARGS, ""},
     {"buffer_free", pycsp_buffer_free, METH_VARARGS, ""},
     {"buffer_get", pycsp_buffer_get, METH_VARARGS, ""},
     {"buffer_remaining", pycsp_buffer_remaining, METH_NOARGS, ""},
