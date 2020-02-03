@@ -157,7 +157,7 @@ int csp_can_socketcan_open_and_add_interface(const char * device, const char * i
 	struct ifreq ifr;
 	strncpy(ifr.ifr_name, device, IFNAMSIZ - 1);
 	if (ioctl(ctx->socket, SIOCGIFINDEX, &ifr) < 0) {
-		csp_log_error("%s[%s]: ioctl() failed, error: %s", __FUNCTION__, ctx->name, strerror(errno));
+		csp_log_error("%s[%s]: device: [%s], ioctl() failed, error: %s", __FUNCTION__, ctx->name, device, strerror(errno));
 		socketcan_free(ctx);
 		return CSP_ERR_INVAL;
 	}

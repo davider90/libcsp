@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
-Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
+Copyright (C) 2012 Gomspace ApS (http://www.gomspace.com)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -18,19 +18,25 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef LIB_CSP_SRC_CSP_INIT_H_
-#define LIB_CSP_SRC_CSP_INIT_H_
+#ifndef _CSP_ARCH_POSIX_CSP_SYSTEM_H_
+#define _CSP_ARCH_POSIX_CSP_SYSTEM_H_
 
-#include <csp/csp.h>
+/**
+   @file
+
+   Posix extension to system interface.
+*/
+
+#include <csp/arch/csp_system.h>
 
 #ifdef __cplusplus
-extern "C" {
+yextern "C" {
 #endif
 
-extern csp_conf_t csp_conf;
-
-int csp_buffer_init(void);
-void csp_buffer_free_resources(void);
+int csp_sys_reboot_using_system(void);
+int csp_sys_reboot_using_reboot(void);
+int csp_sys_shutdown_using_system(void);
+int csp_sys_shutdown_using_reboot(void);
 
 #ifdef __cplusplus
 }

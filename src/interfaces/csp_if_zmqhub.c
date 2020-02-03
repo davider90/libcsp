@@ -139,19 +139,23 @@ int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_
 	return CSP_ERR_NONE;
 }
 
-int csp_zmqhub_init(uint8_t addr, const char * host) {
+int csp_zmqhub_init(uint8_t addr,
+                    const char * host,
+                    csp_iface_t ** return_interface) {
+
 	char pub[100];
 	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_SUBSCRIBE_PORT, pub, sizeof(pub));
 
 	char sub[100];
 	csp_zmqhub_make_endpoint(host, CSP_ZMQPROXY_PUBLISH_PORT, sub, sizeof(sub));
 
-	return csp_zmqhub_init_w_endpoints(addr, pub, sub);
+	return csp_zmqhub_init_w_endpoints(addr, pub, sub, return_interface);
 }
 
 int csp_zmqhub_init_w_endpoints(uint8_t addr,
                                 const char * publisher_endpoint,
-				const char * subscriber_endpoint) {
+				const char * subscriber_endpoint,
+                                csp_iface_t ** return_interface) {
 
 	uint8_t * rxfilter = NULL;
 	unsigned int rxfilter_count = 0;
@@ -165,7 +169,7 @@ int csp_zmqhub_init_w_endpoints(uint8_t addr,
 							 rxfilter, rxfilter_count,
 							 publisher_endpoint,
 							 subscriber_endpoint,
-							 NULL);
+							 return_interface);
 }
 
 int csp_zmqhub_init_w_name_endpoints_rxfilter(const char * name,

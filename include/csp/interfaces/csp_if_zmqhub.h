@@ -85,20 +85,24 @@ int csp_zmqhub_make_endpoint(const char * host, uint16_t port, char * buf, size_
    Setup ZMQ interface
    @param addr only receive messages matching this address (255 means all)
    @param host host name or IP of zmqproxy host.
+   @param[out] return_interface created CSP interface
    @return #CSP_ERR_NONE on succcess - else assert.
 */
-int csp_zmqhub_init(uint8_t addr, const char * host);
+int csp_zmqhub_init(uint8_t addr, const char * host,
+                    csp_iface_t ** return_interface);
 
 /**
    Setup ZMQ interface
    @param addr only receive messages matching this address (255 means all)
    @param publish_endpoint publish (tx) endpoint -> connect to zmqproxy's subscribe port #CSP_ZMQPROXY_SUBSCRIBE_PORT.
    @param subscribe_endpoint subscribe (rx) endpoint -> connect to zmqproxy's publish port #CSP_ZMQPROXY_PUBLISH_PORT.
+   @param[out] return_interface created CSP interface
    @return #CSP_ERR_NONE on succcess - else assert.
 */
 int csp_zmqhub_init_w_endpoints(uint8_t addr,
                                 const char * publish_endpoint,
-                                const char * subscribe_endpoint);
+                                const char * subscribe_endpoint,
+                                csp_iface_t ** return_interface);
 
 /**
    Setup ZMQ interface
