@@ -91,6 +91,7 @@ typedef int (*csp_sys_reboot_t)(void);
    Set system reboot/reset function.
    Function will be called by csp_sys_reboot().
    @param[in] reboot callback.
+   @see csp_sys_reboot_using_system(), csp_sys_reboot_using_reboot()
 */
 void csp_sys_set_reboot(csp_sys_reboot_t reboot);
 
@@ -111,6 +112,7 @@ typedef int (*csp_sys_shutdown_t)(void);
    Set system shutdown function.
    Function will be called by csp_sys_shutdown().
    @param[in] shutdown callback.
+   @see csp_sys_shutdown_using_system(), csp_sys_shutdown_using_reboot()
 */
 void csp_sys_set_shutdown(csp_sys_shutdown_t shutdown);
 
