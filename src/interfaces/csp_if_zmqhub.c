@@ -82,7 +82,7 @@ CSP_DEFINE_TASK(csp_zmqhub_task) {
 	csp_packet_t * packet;
 	const uint32_t HEADER_SIZE = (sizeof(packet->id) + sizeof(uint8_t));
 
-	csp_log_info("RX %s started", drv->iface.name);
+	//csp_log_info("RX %s started", drv->iface.name);
 
 	while(1) {
 		zmq_msg_t msg;

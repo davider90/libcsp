@@ -50,13 +50,16 @@ static void kiss_driver_rx(void * user_data, uint8_t * data, size_t data_size, v
 
 int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const char * ifname, csp_iface_t ** return_iface) {
 
+	if (ifname == NULL) {
+		ifname = CSP_IF_KISS_DEFAULT_NAME;
+	}
+
+	csp_log_info("INIT %s: device: [%s], bitrate: %d",
+			ifname, conf->device, conf->baudrate);
+
 	kiss_context_t * ctx = csp_calloc(1, sizeof(*ctx));
 	if (ctx == NULL) {
 		return CSP_ERR_NOMEM;
-	}
-
-	if (ifname == NULL) {
-		ifname = CSP_IF_KISS_DEFAULT_NAME;
 	}
 
 	strncpy(ctx->name, ifname, sizeof(ctx->name) - 1);
@@ -69,7 +72,6 @@ int csp_usart_open_and_add_kiss_interface(const csp_usart_conf_t *conf, const ch
 #else
 	ctx->fd = -1;
 #endif
-
 
 	int res = csp_kiss_add_interface(&ctx->iface);
 	if (res == CSP_ERR_NONE) {
