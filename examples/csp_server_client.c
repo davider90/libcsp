@@ -255,7 +255,7 @@ int main(int argc, char * argv[]) {
 #endif
 #if (CSP_HAVE_LIBZMQ)
     if (zmq_device) {
-        error = csp_zmqhub_init(csp_get_address(), zmq_device, &default_iface);
+        error = csp_zmqhub_init(csp_get_address(), zmq_device, 0, &default_iface);
         if (error != CSP_ERR_NONE) {
             csp_log_error("failed to add ZMQ interface [%s], error: %d", zmq_device, error);
             exit(1);
