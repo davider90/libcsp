@@ -59,7 +59,7 @@ static void * usart_rx_thread(void * arg) {
 	return NULL;
 }
 
-#if (0)
+#if (0) // Unused function and no prototype in public heaaders
 int getbaud(int ifd) {
 	struct termios termAttr;
 	int inputSpeed = -1;
@@ -175,7 +175,7 @@ int csp_usart_write(csp_usart_fd_t fd, const void * data, size_t data_length) {
 			return res;
 		}
 	}
-	return CSP_ERR_TX;
+	return CSP_ERR_TX; // best matching CSP error code.
 
 }
 

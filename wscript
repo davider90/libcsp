@@ -237,8 +237,8 @@ def build(ctx):
                     lib=ctx.env.LIBS,
                     use='csp')
 
-        ctx.program(source='examples/test_arch.c',
-                    target='test_arch',
+        ctx.program(source='examples/csp_arch.c',
+                    target='csp_arch',
                     lib=ctx.env.LIBS,
                     use='csp')
 
