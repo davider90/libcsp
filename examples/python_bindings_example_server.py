@@ -20,16 +20,10 @@ if __name__ == "__main__":
     zmqp = subprocess.Popen('build/zmqproxy')
 
     # init csp
-    csp.buffer_init(10, 300)
-    csp.init(27)
+    csp.init(27,"test_service","bindings","1.2.3",10,300)
     csp.zmqhub_init(27, "localhost")
     csp.rtable_set(28, 5, "ZMQHUB")
     csp.route_start_task()
-
-    # set identity
-    csp.set_hostname("test_service")
-    csp.set_model("bindings")
-    csp.set_revision("1.2.3")
 
     # and read it back
     print (csp.get_hostname())

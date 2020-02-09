@@ -15,8 +15,7 @@ import libcsp as csp
 
 if __name__ == "__main__":
 
-    csp.buffer_init(10, 300)
-    csp.init(28)
+    csp.init(28,"test_service","bindings","1.2.3",10,300)
     csp.zmqhub_init(28, "localhost")
     csp.rtable_set(27, 5, "ZMQHUB")
     csp.route_start_task()
