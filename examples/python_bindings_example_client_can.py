@@ -15,15 +15,19 @@ import libcsp as csp
 
 if __name__ == "__main__":
 
-    csp.buffer_init(10, 300)
-    csp.init(28)
-    csp.can_socketcan_init("can0")
-    csp.rtable_set(4, 5, "CAN")
-    csp.route_start_task()
+    csp.init(28, "host", "model", "revision", 10, 300)
+    #csp.can_socketcan_init("can0")
+    csp.zmqhub_init(28, "localhost")
+    csp.rtable_set(0, 0, "ZMQHUB")
 
+    csp.route_start_task()
+    
     # allow router task startup
     time.sleep(1)
 
-    node = 4
-    if csp.ping(node) < 0:
-        print ("Unable to ping node %d" % (node))
+    node = 27
+    res = csp.ping(node)
+    if res >= 0:
+        print("Pinged %d in %d mS" % (node, res))
+    else:
+        print("Unable to ping node %d, error: %d" % (node, res))
