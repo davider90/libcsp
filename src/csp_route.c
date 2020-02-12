@@ -1,7 +1,7 @@
 /*
 Cubesat Space Protocol - A small network-layer protocol designed for Cubesats
 Copyright (C) 2012 GomSpace ApS (http://www.gomspace.com)
-Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk)
+Copyright (C) 2012 AAUSAT3 Project (http://aausat3.space.aau.dk) 
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -326,11 +326,10 @@ static CSP_DEFINE_TASK(csp_task_router) {
 
 int csp_route_start_task(unsigned int task_stack_size, unsigned int task_priority) {
 
-	static csp_thread_handle_t handle_router;
-	int ret = csp_thread_create(csp_task_router, "RTE", task_stack_size, NULL, task_priority, &handle_router);
+	int ret = csp_thread_create(csp_task_router, "RTE", task_stack_size, NULL, task_priority, NULL);
 	if (ret != 0) {
 		csp_log_error("Failed to start router task, error: %d", ret);
-		return CSP_ERR_NOMEM;
+		return ret;
 	}
 
 	return CSP_ERR_NONE;

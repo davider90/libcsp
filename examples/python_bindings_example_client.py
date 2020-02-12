@@ -15,7 +15,11 @@ import libcsp as csp
 
 if __name__ == "__main__":
 
-    csp.init(28,"test_service","bindings","1.2.3",10,300)
+    csp.init(28, "host", "model", "1.2.3", 10, 300)
+    try:
+        csp.can_socketcan_init("can0")
+    except csp.GenericError as e:
+        print "PWU", e
     csp.zmqhub_init(28, "localhost")
     csp.rtable_set(27, 5, "ZMQHUB")
     csp.route_start_task()
