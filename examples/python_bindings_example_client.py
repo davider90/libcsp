@@ -19,7 +19,7 @@ if __name__ == "__main__":
     try:
         csp.can_socketcan_init("can0")
     except csp.GenericError as e:
-        print "PWU", e
+        print ("PWU", e)
     csp.zmqhub_init(28, "localhost")
     csp.rtable_set(27, 5, "ZMQHUB")
     csp.route_start_task()
